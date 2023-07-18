@@ -1,0 +1,47 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: hicolour - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x809 /fo"Release/Hicolour.res" /d "NDEBUG" "C:\winhicol\Hicolour.rc"" 
+Creating temporary file "C:\WINDOWS\TEMP\RSPB281.TMP" with contents
+[
+/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /FR"Release/" /Fp"Release/hicolour.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\winhicol\hicolour.c"
+"C:\winhicol\jfrohwein.c"
+"C:\winhicol\median.c"
+"C:\winhicol\Wu.c"
+]
+Creating command line "cl.exe @C:\WINDOWS\TEMP\RSPB281.TMP" 
+Creating temporary file "C:\WINDOWS\TEMP\RSPB282.TMP" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/hicolour.pdb" /machine:I386 /out:"Release/hicolour.exe" 
+.\Release\hicolour.obj
+.\Release\jfrohwein.obj
+.\Release\median.obj
+.\Release\Wu.obj
+.\Release\Hicolour.res
+]
+Creating command line "link.exe @C:\WINDOWS\TEMP\RSPB282.TMP"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+hicolour.c
+jfrohwein.c
+median.c
+Wu.c
+Linking...
+Creating command line "bscmake.exe /nologo /o"Release/hicolour.bsc"  .\Release\hicolour.sbr .\Release\jfrohwein.sbr .\Release\median.sbr .\Release\Wu.sbr"
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+hicolour.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

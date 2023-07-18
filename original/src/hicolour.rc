@@ -1,0 +1,145 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 267, 262
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | 
+    WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_ACCEPTFILES | WS_EX_CLIENTEDGE
+CAPTION "Gameboy HiColour Convertor  V1.2 beta"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Original Image",IDC_STATIC,10,5,115,104,0,
+                    WS_EX_DLGMODALFRAME
+    COMBOBOX        IDC_CONVERTLEFT,138,18,61,224,CBS_DROPDOWNLIST | 
+                    CBS_OEMCONVERT | CBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
+                    WS_TABSTOP
+    DEFPUSHBUTTON   "File",IDC_FILE,138,53,123,17
+    PUSHBUTTON      "Convert",IDC_CONVERT,138,75,123,17,WS_DISABLED
+    PUSHBUTTON      "Export Data",IDC_SAVE,138,97,123,17,WS_DISABLED
+    PUSHBUTTON      "Exit",IDC_EXIT,138,163,123,17
+    CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH | 
+                    WS_BORDER,9,242,253,15,WS_EX_CLIENTEDGE | 
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Converted Image",IDC_STATIC,10,112,115,104,0,
+                    WS_EX_DLGMODALFRAME
+    PUSHBUTTON      "Info",IDC_INFO,138,141,123,17
+    CONTROL         "Slider1",IDC_SLIDER1,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,144,192,115,11
+    CONTROL         "Slider2",IDC_SLIDER2,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,144,207,115,11
+    CONTROL         "Slider2",IDC_SLIDER3,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,143,222,115,11
+    LTEXT           "R",IDC_STATIC,135,193,8,8
+    LTEXT           "G",IDC_STATIC,135,207,8,8
+    LTEXT           "B",IDC_STATIC,135,222,8,8
+    CONTROL         "True Gameboy Colour",IDC_TRUE_GBC,"Button",
+                    BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,9,220,115,15
+    COMBOBOX        IDC_CONVERTRIGHT,202,18,58,224,CBS_DROPDOWNLIST | 
+                    CBS_OEMCONVERT | CBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Left Screen",IDC_STATIC,146,7,38,8
+    LTEXT           "Right Screen",IDC_STATIC,209,7,42,8
+    PUSHBUTTON      "View Attribute Data",IDC_VIEW_ATTRIBS,138,119,123,17,
+                    WS_DISABLED
+    COMBOBOX        IDC_CONVERTTYPE,138,35,123,80,CBS_DROPDOWNLIST | 
+                    CBS_OEMCONVERT | CBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 260
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 255
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.K.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
