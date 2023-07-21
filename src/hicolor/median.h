@@ -6,7 +6,7 @@
 
 #define PRECISION_R 	5
 #define PRECISION_G 	5
-#define PRECISION_B 	5 
+#define PRECISION_B 	5
 
 #define R_SCALE  	<< 1
 #define G_SCALE  	* 3
@@ -33,14 +33,14 @@ typedef unsigned long ColorFreq;
 typedef ColorFreq *Histogram;
 
 
-struct _Color 
+struct _Color
 {
 	int		red;
     int		green;
     int		blue;
 };
 
-typedef struct 
+typedef struct
 {
 	int		Rmin, Rmax;		// The bounds of the box (inclusive); expressed as histogram indexes
 	int		Gmin, Gmax;

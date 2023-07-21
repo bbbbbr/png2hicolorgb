@@ -1,10 +1,10 @@
-#include <windows.h>
-#include <winuser.h>
-#include <commctrl.h>
+
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-
-#include "resource.h"
+// #include "resource.h"
 #include "defines.h"
 #include "jfrohwein.h"
 #include "hicolour.h"
@@ -44,7 +44,6 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 
 		for(j=StartSplit;j<(StartSplit+NumSplit);j++)
 		{
-			SendDlgItemMessage(Ghdwnd,IDC_PROGRESS,PBM_STEPIT,0,0);
 			Accum=0;
 			width=0;
 			for(i=0;i<4;i++)
@@ -83,9 +82,9 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 					state=0;
 
 					if(MastX==0)
-						os=1; 
+						os=1;
 					else
-						os=0; 
+						os=0;
 
 					y2 = (MastY*8+y*2)/2;		//setup Y-index into Pal structure.
 
@@ -366,7 +365,7 @@ void RemapPCtoGBC( void )
 					SmallestError = 0x7fffffff;
 
 					if (MastX==0)		//add Y-offset for left of image.
-						os=1; 
+						os=1;
 					else
 						os=0;
 
@@ -383,7 +382,7 @@ void RemapPCtoGBC( void )
 						for(dx=0; dx<sx; dx++)	//scan 16/24 columns.
 						{
 							cx = TileOffset[x]+MastX*80;   //get X-index into image.
-							cx += dx;							
+							cx += dx;
 
 							cy = MastY*8+y*2-os+dy; //get row (Y) index.
 
@@ -394,7 +393,7 @@ void RemapPCtoGBC( void )
 
 							b1=	((IdealPal[MastX*4+x][y2][1][0]-(int)pic[cx][cy][0]) * (IdealPal[MastX*4+x][y2][1][0]-(int)pic[cx][cy][0]) ) +
 								((IdealPal[MastX*4+x][y2][1][1]-(int)pic[cx][cy][1]) * (IdealPal[MastX*4+x][y2][1][1]-(int)pic[cx][cy][1]) ) +
-								((IdealPal[MastX*4+x][y2][1][2]-(int)pic[cx][cy][2]) * (IdealPal[MastX*4+x][y2][1][2]-(int)pic[cx][cy][2]) ); 
+								((IdealPal[MastX*4+x][y2][1][2]-(int)pic[cx][cy][2]) * (IdealPal[MastX*4+x][y2][1][2]-(int)pic[cx][cy][2]) );
 
 							c1=	((IdealPal[MastX*4+x][y2][2][0]-(int)pic[cx][cy][0]) * (IdealPal[MastX*4+x][y2][2][0]-(int)pic[cx][cy][0]) ) +
 								((IdealPal[MastX*4+x][y2][2][1]-(int)pic[cx][cy][1]) * (IdealPal[MastX*4+x][y2][2][1]-(int)pic[cx][cy][1]) ) +
@@ -438,7 +437,7 @@ void RemapPCtoGBC( void )
 								raw[0][cx][MastY*8+y*2-os+dy][1] = g;
 								raw[0][cx][MastY*8+y*2-os+dy][2] = b;
 
-								GBView=translate(raw[0][cx][MastY*8+y*2-os+dy]);
+								RGBQUAD GBView=translate(raw[0][cx][MastY*8+y*2-os+dy]);
 
 								raw[1][cx][MastY*8+y*2-os+dy][0] = GBView.rgbRed;
 								raw[1][cx][MastY*8+y*2-os+dy][1] = GBView.rgbGreen;
@@ -456,7 +455,7 @@ void RemapPCtoGBC( void )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This function will average the colours used in a square section 
+// This function will average the colours used in a square section
 // of a picture, in this case 4 pixels are averaged into 1 colour.
 
 void AddPixels (int xs, int ys, int width, int height)
@@ -533,7 +532,7 @@ int CountColorsInCell(int x, int y, int sx, int os)
 // Due to the nature of the interleave on the Gameboy color all of the
 // left hand side of the screen has to use the same attribute block width
 // This function will determine which of the 80 combinations of attrib block
-// allows the closest likeness to the original picture. The range of 
+// allows the closest likeness to the original picture. The range of
 // checks can be limited to within a certain range by means of the StartSplit
 // and NumSplit variables
 
@@ -566,8 +565,8 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
  		Accum=0;														// Each combination has a accumalative score
 
 		for(MastY=0;MastY<18;MastY++)									// Try evert attribute block on the Y Axis
-		{	 
-			SendDlgItemMessage(Ghdwnd,IDC_PROGRESS,PBM_STEPIT,0,0);		// Update windows with our progress
+		{
+// TODO : progress message?			SendDlgItemMessage(Ghdwnd,IDC_PROGRESS,PBM_STEPIT,0,0);		// Update windows with our progress
 			width=0;
 
 			for(i=0;i<4;i++)											// There are 4 attrib blocks on the left hand side of the screen
@@ -665,7 +664,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 												}
 											}
 
-											if (ErrorTerm < SmallestError)				
+											if (ErrorTerm < SmallestError)
 												SmallestError = ErrorTerm;			// Store details of smallest distance
 										}
 									}

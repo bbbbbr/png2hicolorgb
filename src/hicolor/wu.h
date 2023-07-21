@@ -2,7 +2,7 @@
 #define __WU_H__
 
 
-struct box 
+struct box
 {
     s32		r0;         /* min value, exclusive */
     s32		r1;         /* max value, inclusive */

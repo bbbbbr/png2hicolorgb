@@ -7,11 +7,10 @@
 
        Some fixes and additional code by Benny.
 */
-
-#include<stdio.h>
-#include <windows.h>
-#include <winuser.h>
-#include <commctrl.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "defines.h"
 #include "hicolour.h"
@@ -57,7 +56,7 @@ void Hist3d(s32 *vwt,s32 *vmr,s32 *vmg,s32 *vmb, float *m_2)
 	for (i = 0; i < 256; ++i)
 		table[i] = i * i;
 
-	for (i = 0; i < ImageSize; ++i) 
+	for (i = 0; i < ImageSize; ++i)
 	{
 		r = TrueColorPic[i*3  ];
 		g = TrueColorPic[i*3+1];
@@ -84,7 +83,7 @@ void Momt3d(s32 *vwt, s32 *vmr, s32 *vmg, s32 *vmb, float *m_2)
 	s32		line,line_r,line_g,line_b,area[BOX],area_r[BOX],area_g[BOX],area_b[BOX];
 	float	line2,area2[BOX];
 
-	for (r = 1; r <= 32; ++r) 
+	for (r = 1; r <= 32; ++r)
 	{
 		for (i = 0; i <= 32; ++i)
 		{
@@ -92,12 +91,12 @@ void Momt3d(s32 *vwt, s32 *vmr, s32 *vmg, s32 *vmb, float *m_2)
 			area2[i] = 0.0;
 		}
 
-		for (g = 1; g <= 32; ++g) 
+		for (g = 1; g <= 32; ++g)
 		{
 			line2 = 0.0;
 			line = line_r = line_g = line_b = 0;
 
-			for (b = 1; b <= 32; ++b) 
+			for (b = 1; b <= 32; ++b)
 			{
 				ind1 = (r << 10) + (r << 6) + r + (g << 5) + g + b;
 				line += vwt[ind1];
@@ -130,12 +129,12 @@ s32 Vol(struct box * cube, s32 mmt[BOX][BOX][BOX])
 
 s32 Bottom(struct box * cube, u8 dir, s32 mmt[BOX][BOX][BOX])
 {
-    switch (dir) 
+    switch (dir)
 	{
 
 		case RED:
 
-			return (-mmt[cube->r0][cube->g1][cube->b1] + mmt[cube->r0][cube->g1][cube->b0] 
+			return (-mmt[cube->r0][cube->g1][cube->b1] + mmt[cube->r0][cube->g1][cube->b0]
 					+ mmt[cube->r0][cube->g0][cube->b1] - mmt[cube->r0][cube->g0][cube->b0]);
 	    case GREEN:
 
@@ -144,7 +143,7 @@ s32 Bottom(struct box * cube, u8 dir, s32 mmt[BOX][BOX][BOX])
 
 	    case BLUE:
 
-			return (-mmt[cube->r1][cube->g1][cube->b0] + mmt[cube->r1][cube->g0][cube->b0] 
+			return (-mmt[cube->r1][cube->g1][cube->b0] + mmt[cube->r1][cube->g0][cube->b0]
 					+ mmt[cube->r0][cube->g1][cube->b0] - mmt[cube->r0][cube->g0][cube->b0]);
     }
 
@@ -154,9 +153,9 @@ s32 Bottom(struct box * cube, u8 dir, s32 mmt[BOX][BOX][BOX])
 
 s32 Top(struct box * cube, u8 dir, s32 pos, s32 mmt[BOX][BOX][BOX])
 {
-    switch (dir) 
+    switch (dir)
 	{
-    
+
 		case RED:
 
 			return (mmt[pos][cube->g1][cube->b1] - mmt[pos][cube->g1][cube->b0]
@@ -207,16 +206,16 @@ float Maximize(struct box *cube, u8 dir, s32 first, s32 last, s32 *cut, s32 whol
     max = 0.0;
     *cut = -1;
 
-    for (i = first; i < last; ++i) 
+    for (i = first; i < last; ++i)
 	{
 		half_r = base_r + Top(cube, dir, i, mr);
 		half_g = base_g + Top(cube, dir, i, mg);
 		half_b = base_b + Top(cube, dir, i, mb);
 		half_w = base_w + Top(cube, dir, i, wt);
 
-        if (half_w == 0) 
+        if (half_w == 0)
 		{
-            continue;     
+            continue;
         }
 		else
 		{
@@ -228,16 +227,16 @@ float Maximize(struct box *cube, u8 dir, s32 first, s32 last, s32 *cut, s32 whol
 		half_b = whole_b - half_b;
 		half_w = whole_w - half_w;
 
-        if (half_w == 0) 
+        if (half_w == 0)
 		{
-			continue;         
-        } 
+			continue;
+        }
 		else
 		{
 			temp += ((float) half_r * half_r + (float) half_g * half_g + (float) half_b * half_b) / half_w;
 		}
 
-        if (temp > max) 
+        if (temp > max)
 		{
 			max = temp;
 			*cut = i;
@@ -263,7 +262,7 @@ s32 Cut(struct box * set1, struct box * set2)
     maxg = Maximize(set1, GREEN, set1->g0 + 1, set1->g1, &cutg, whole_r, whole_g, whole_b, whole_w);
     maxb = Maximize(set1, BLUE, set1->b0 + 1, set1->b1, &cutb, whole_r, whole_g, whole_b, whole_w);
 
-    if ((maxr >= maxg) && (maxr >= maxb)) 
+    if ((maxr >= maxg) && (maxr >= maxb))
 	{
 		dir = RED;
 
@@ -283,7 +282,7 @@ s32 Cut(struct box * set1, struct box * set2)
     set2->g1 = set1->g1;
     set2->b1 = set1->b1;
 
-	switch (dir) 
+	switch (dir)
 	{
 
 		case RED:
@@ -353,8 +352,10 @@ s32 wuReduce(u8 *RGBpic, s32 numcolors, s32 picsize)
 
 	Qadd = AQadd;
 
-	Hist3d((long *)&wt, (long *)&mr, (long *)&mg, (long *)&mb, (float *)&m2);
-	Momt3d((long *)&wt, (long *)&mr, (long *)&mg, (long *)&mb, (float *)&m2);
+    // Hist3d((long *)&wt, (long *)&mr, (long *)&mg, (long *)&mb, (float *)&m2);
+    // Momt3d((long *)&wt, (long *)&mr, (long *)&mg, (long *)&mb, (float *)&m2);
+	Hist3d((s32 *)&wt, (s32 *)&mr, (s32 *)&mg, (s32 *)&mb, (float *)&m2);
+	Momt3d((s32 *)&wt, (s32 *)&mr, (s32 *)&mg, (s32 *)&mb, (float *)&m2);
 
 	cube[0].r0 = cube[0].g0 = cube[0].b0 = 0;
 	cube[0].r1 = cube[0].g1 = cube[0].b1 = 32;
@@ -412,7 +413,7 @@ s32 wuReduce(u8 *RGBpic, s32 numcolors, s32 picsize)
 		}
 	}
 
-	for (i = 0; i < ImageSize; i++) 
+	for (i = 0; i < ImageSize; i++)
 		Picture256[i] = tag[Qadd[i]];
 
     return 0;

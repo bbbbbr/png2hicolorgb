@@ -2,9 +2,9 @@
 #define __jfrohwein_h__
 
 
-#include <windows.h>
-#include <winuser.h>
-#include <commctrl.h>
+// #include <windows.h>
+// #include <winuser.h>
+// #include <commctrl.h>
 #include <stdio.h>
 
 void	RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit);
