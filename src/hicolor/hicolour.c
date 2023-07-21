@@ -151,8 +151,7 @@ void hicolor_init(void) {
     // Defaults
     LConversion = 3;            // Default Conversion (Adaptive 3) Left Screen
     RConversion = 3;            // Default Conversion (Adaptive 3) Righ Screen
-    // ConvertType = 2; // Normal default is "2"
-    ConvertType = 0;
+    ConvertType = 2; // Normal default is 2 ("Adaptive 3")
 
     // TODO: unused, delete
     // GWeight=100;
