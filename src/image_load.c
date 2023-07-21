@@ -17,7 +17,6 @@
 
 
 static bool image_validate(image_data *);
-static void image_convert_RGBA24_to_BGRX24(image_data *);
 static bool image_load_png(image_data *, const char *);
 
 
@@ -46,24 +45,8 @@ static bool image_validate(image_data * p_decoded_image) {
     return true;
 }
 
-// TODO: ok to remove?
-/*
-// Converts RGBA24 to BGRX24 (Windows RGBQUAD)
-// Swaps [R] <-> [B], ignores [A]
-static void image_convert_RGBA24_to_BGRX24(image_data * p_decoded_image) {
 
-    uint8_t red_temp;
-    uint8_t * p_data = p_decoded_image->p_img_data;
-
-    for (int c = 0; c < p_decoded_image->size; c++) {
-        red_temp = *p_data;       // redtemp   <- RGBA.red
-        *p_data = *(p_data + 2);  // BGRX.blue <- RGBA.blue
-        *(p_data + 2) = red_temp; // BGRX.red  <- red_temp
-    }
-}
-
-*/
-// Loads a PNG image image into RGBA24 format
+// Loads a PNG image image into RGB888(24) format
 // Return: true if success
 static bool image_load_png(image_data * p_decoded_image, const char * filename) {
 
@@ -71,9 +54,7 @@ static bool image_load_png(image_data * p_decoded_image, const char * filename) 
     LodePNGState png_state;
     lodepng_state_init(&png_state);
 
-    // // Decode with auto conversion to RGBA32
-    // unsigned error = lodepng_decode32_file(&p_decoded_image->p_img_data, &p_decoded_image->width, &p_decoded_image->height, filename);
-    // Decode with auto conversion to RGBA24
+    // Decode with auto conversion to RGB888(24)
     unsigned error = lodepng_decode24_file(&p_decoded_image->p_img_data, &p_decoded_image->width, &p_decoded_image->height, filename);
 
     if (error) {
@@ -114,7 +95,6 @@ bool image_load(image_data * p_decoded_image, const char * filename, const uint8
         status = image_validate(p_decoded_image);
 
     if (status) {
-        // image_convert_RGBA24_to_BGRX24(p_decoded_image); // TODO: remove?
         log_verbose("Decoded image.width: %d\n", p_decoded_image->width);
         log_verbose("Decoded image.height: %d\n", p_decoded_image->height);
         log_verbose("Decoded image.size: %d\n", p_decoded_image->size);
