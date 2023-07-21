@@ -1,0 +1,238 @@
+water 6:14 -> 
+
+pTGA->data[] -> pic2[]
+
+hBitmapsource = CreateDIBSection() -> &bmihsource, -> &pBitssource -> Display Source image
+hBitmapdest   = CreateDIBSection() -> &bmihdest,   -> &pBitsdest   -> Display Dest image
+
+
+Image Data Path:
+    png_image[].rgb -> pic2[].rgb -> pBitssource[].bgr?? -> (so far)
+
+
+
+->Convert()
+    -> hicolor_convert()
+        - pic2[].rgb -> (rgb slider weighting) -> pic[].rgb -> Data[].rgb
+      -> Convert_Method4()
+          -> DetermineBestLeft()
+              -> AddPixels()
+                 - pic[] -> avgr/g/b
+              -> CountColorsInCell()
+                 - pic[] -> returned in count
+          -> RemapGB()
+              - avgr/g/b -> Pal[] ... Pal[] & pic[] -> l.smallestError/etc
+              - Pal[] -> TempPal[]
+              - pic[] -> TempPal[]
+              - TempPal[] -> IdealPal[]
+              -> AddPixels()
+                 - pic[] -> avgr/g/b
+              -> CountColorsInCell()
+                 - pic[] -> (returned value)
+          -> RemapPCtoGBC()
+             - AttribTable[] = (calculated value)
+             - IdealPal[] & pic[] -> rgb -> raw[0]
+             - IdealPal[] -> gbcolor -> out[0]
+              -> translate()
+                 - input[] -> intensity[] & influence[] -> (returned value)
+             - rgb -> translate() -> GBView ->  raw[1]
+
+        - raw[] -> pBitsdest[] (Display?)
+
+    -> DoOtherConversion()
+       - pic[] -> Data[]
+        -> Method1()
+            -> to_indexed()
+                -> median_cut_pass1_rgb()
+                    -> zero_histogram_rgb()
+                       - 0 -> histogram[]
+                    -> update_box_rgb()
+                    - Data[] as src -> histogram[] -> boxlist
+                    -> median_cut_rgb()
+                        -> find_biggest_color_pop()
+                        -> find_biggest_volume()
+                        -> update_box_rgb()
+                      - histogram[] -> boxlist
+                    -> compute_color_rgb()
+                       - histogram[] -> cmap[]
+
+                -> zero_histogram_rgb()
+                  - 0 -> histogram[]
+                -> init_error_limit()
+                  - (computed values) -> table[in]
+                - Data[] as src -> ... -> Picture256[] as dest
+                -> fill_inverse_cmap_rgb()
+                    -> find_nearby_colors()
+                    -> find_best_colors()
+                    - ... -> histogram[]
+                - ... -> cmap[] -> QuantizedPalette[]
+
+            -> wuReduce()
+              - Data[].rgb as RGBpic[] as TrueColorPic[] -> QuantizedPalette[]
+                -> Hist3d()
+                -> Momt3d()
+                -> Cut()
+                    -> Vol()
+                    -> Maximize()
+                        -> Bottom()
+                        -> Top()
+                -> Var()
+                    -> Vol()
+                -> Mark()
+                -> Vol()
+              - QuantizedPalette[] -> IdealPal[]
+              - Picture256 & QuantizedPalette[] -> pBitdest[]
+              - Picture256[] -> out[]
+            -> ImageRating()
+            - pic2[] as pBitssource & pBitdest[] -> (returned value) BestLine
+        -> translate()
+        - pBitsdest[] -> raw[0] -> translate() -> raw[1]
+
+    -> hicolor_save()
+        -> ExportTileSet()
+         -> out[]         -> "file.til"
+        -> ExportPalettes()
+         -> IdealPal[]    -> "file.pal"
+
+        -> ExportAttrMap()
+         -> "20x18" map -> "file.map"
+         -> AttribTable[] -> "file.atr"
+
+
+case IDC_FILE:
+    pBuffer = (PBYTE)malloc(iFileLength);   // Allocate memory for file
+    ReadFile(hFile,pBuffer,iFileLength,&dwBytesRead,NULL);      // Read file into memory
+    -> CheckTGA()
+    - TGA File -> pBuffer[] -> as pTGA[] -> pic2[]
+      -> pic2[] -> pBitssource[]
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+WinMain() <int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) at hicolour.c:178>:
+    InitCommonControls()
+    DialogBox()
+    MAKEINTRESOURCE()
+    DialogFunc() <BOOL CALLBACK DialogFunc (HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam) at hicolour.c:269>:
+        TEXT()
+        SendDlgItemMessage()
+        MAKELONG()
+        CreateDIBSection()
+        GetDC()
+        GetDeviceCaps()
+        ReleaseDC()
+        MessageBox()
+        GetObject()
+        CreateCompatibleDC()
+        SelectObject()
+        BitBlt()
+        DeleteDC()
+        EndDialog()
+        LOWORD()
+        GetOpenFileName()
+        CreateFile()
+        GetFileSize()
+        malloc()
+        ReadFile()
+        CloseHandle()
+        CheckTGA() <int CheckTGA (void) at hicolour.c:889>:
+            MessageBox()
+        EnableWindow()
+        GetDlgItem()
+        InvalidateRect()
+        strcpy()
+        GetSaveFileName()
+        ExportTileSet() <void ExportTileSet (HWND hWnd, char *prefix) at hicolour.c:710>:
+            strcpy()
+            strcat()
+            SetFileAttributes()
+            CreateFile()
+            MessageBox()
+            WriteFile()
+            CloseHandle()
+        ExportPalettes() <void ExportPalettes (HWND hWnd, char *prefix) at hicolour.c:766>:
+            strcpy()
+            strcat()
+            SetFileAttributes()
+            CreateFile()
+            MessageBox()
+            WriteFile()
+            CloseHandle()
+        ExportAttrMap() <void ExportAttrMap (HWND hWnd, char *prefix) at hicolour.c:824>:
+            strcpy()
+            strcat()
+            SetFileAttributes()
+            CreateFile()
+            MessageBox()
+            WriteFile()
+            CloseHandle()
+        HIWORD()
+        SendMessage()
+        ExitConvert() <void ExitConvert (void) at hicolour.c:252>:
+            TerminateThread()
+            CloseHandle()
+        AbortConvert() <void AbortConvert (BOOL OK) at hicolour.c:187>:
+            InvalidateRect()
+            EnableWindow()
+            GetDlgItem()
+            SendMessage()
+        Convert() <void Convert (HWND hdwnd) at hicolour.c:240>:
+            CloseHandle()
+            CreateThread()
+            Convert_ThreadFunc() <DWORD WINAPI Convert_ThreadFunc (LPVOID lpParameter) at hicolour.c:204>:
+                Method4() <void Method4 (void) at hicolour.c:957>:
+                    SendDlgItemMessage()
+                    MAKELPARAM()
+                    DetermineBestLeft() <u8 DetermineBestLeft (u8 StartSplit, u8 NumSplit) at jfrohwein.c:542>:
+                        SendDlgItemMessage()
+                        AddPixels() <void AddPixels (int xs, int ys, int width, int height) at jfrohwein.c:462>:
+                        CountColorsInCell() <int CountColorsInCell (int x, int y, int sx, int os) at jfrohwein.c:492>:
+                    RemapGB() <void RemapGB (u8 MastX, u8 StartSplit, u8 NumSplit) at jfrohwein.c:18>:
+                        SendDlgItemMessage()
+                        AddPixels() <void AddPixels (int xs, int ys, int width, int height) at jfrohwein.c:462>:
+                        CountColorsInCell() <int CountColorsInCell (int x, int y, int sx, int os) at jfrohwein.c:492>:
+                    RemapPCtoGBC() <void RemapPCtoGBC (void) at jfrohwein.c:310>:
+                        translate() <RGBQUAD translate (BYTE rgb[3]) at hicolour.c:1088>:
+                DoOtherConversion() <void DoOtherConversion (int ConvertType) at hicolour.c:1181>:
+                    SendDlgItemMessage()
+                    MAKELPARAM()
+                    Method1() <int Method1 (int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType) at hicolour.c:1343>:
+                        SendDlgItemMessage()
+                        to_indexed() <void to_indexed (u8 *input, s32 ncolors, s32 dither, s32 width, s32 height) at median.c:794>:
+                            median_cut_pass1_rgb() <void median_cut_pass1_rgb (u8 *src, u8 *dest, s32 width, s32 height) at median.c:691>:
+                                zero_histogram_rgb() <void zero_histogram_rgb (void) at median.c:23>:
+                                update_box_rgb() <void update_box_rgb (boxptr boxp) at median.c:85>:
+                                median_cut_rgb() <s32 median_cut_rgb (boxptr boxlist, s32 numboxes) at median.c:224>:
+                                    find_biggest_color_pop() <boxptr find_biggest_color_pop (boxptr boxlist, s32 numboxes) at median.c:38>:
+                                    find_biggest_volume() <boxptr find_biggest_volume (boxptr boxlist, s32 numboxes) at median.c:62>:
+                                    update_box_rgb() <void update_box_rgb (boxptr boxp) at median.c:85>:
+                                compute_color_rgb() <void compute_color_rgb (boxptr boxp, s32 icolor) at median.c:311>:
+                            zero_histogram_rgb() <void zero_histogram_rgb (void) at median.c:23>:
+                            init_error_limit() <s32 *init_error_limit (void) at median.c:759>:
+                            memset()
+                            fill_inverse_cmap_rgb() <void fill_inverse_cmap_rgb (s32 R, s32 G, s32 B) at median.c:631>:
+                                find_nearby_colors() <s32 find_nearby_colors (s32 minR, s32 minG, s32 minB, s32 colorlist[]) at median.c:377>:
+                                find_best_colors() <void find_best_colors (s32 minR, s32 minG, s32 minB, s32 numcolors, s32 colorlist[], s32 bestcolor[]) at median.c:543>:
+                        wuReduce() <s32 wuReduce (u8 *RGBpic, s32 numcolors, s32 picsize) at Wu.c:330>:
+                            Hist3d() <void Hist3d (s32 *vwt, s32 *vmr, s32 *vmg, s32 *vmb, float *m_2) at Wu.c:51>:
+                            Momt3d() <void Momt3d (s32 *vwt, s32 *vmr, s32 *vmg, s32 *vmb, float *m_2) at Wu.c:80>:
+                            Cut() <s32 Cut (struct box *set1, struct box *set2) at Wu.c:250>:
+                                Vol() <s32 Vol (struct box *cube, s32 mmt[BOX][BOX][BOX]) at Wu.c:124>
+                                Maximize() <float Maximize (struct box *cube, u8 dir, s32 first, s32 last, s32 *cut, s32 whole_r, s32 whole_g, s32 whole_b, s32 whole_w) at Wu.c:195>:
+                                    Bottom() <s32 Bottom (struct box *cube, u8 dir, s32 mmt[BOX][BOX][BOX]) at Wu.c:131>:
+                                    Top() <s32 Top (struct box *cube, u8 dir, s32 pos, s32 mmt[BOX][BOX][BOX]) at Wu.c:155>:
+                            Var() <float Var (struct box *cube) at Wu.c:180>:
+                                Vol() <s32 Vol (struct box *cube, s32 mmt[BOX][BOX][BOX]) at Wu.c:124>
+                            Mark() <void Mark (struct box *cube, s32 label, u8 *tag) at Wu.c:318>:
+                            Vol() <s32 Vol (struct box *cube, s32 mmt[BOX][BOX][BOX]) at Wu.c:124>
+                        ImageRating() <unsigned int ImageRating (u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height) at hicolour.c:1158>:
+                    translate() <RGBQUAD translate (BYTE rgb[3]) at hicolour.c:1088>:
+                AbortConvert() <void AbortConvert (BOOL OK) at hicolour.c:187>:
+                    InvalidateRect()
+                    EnableWindow()
+                    GetDlgItem()
+                    SendMessage()
+                CloseHandle()
+        sprintf()
+        strcat()

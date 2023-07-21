@@ -1,0 +1,9 @@
+*.o
+/png2hicolorgb
+/png2hicolorgb.exe
+notes.md
+*.zip
+bin/
+obj/
+package/
+test/
