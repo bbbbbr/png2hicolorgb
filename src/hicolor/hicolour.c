@@ -147,8 +147,8 @@ static      uint8_t *pBitsdest = Bitsdest;
 
 void hicolor_init(void) {
     // Defaults
-    LConversion = 3;            // Default Conversion (Adaptive 3) Left Screen
-    RConversion = 3;            // Default Conversion (Adaptive 3) Righ Screen
+    LConversion = 3; // Default Conversion (Fixed 3-2-3-2) Left Screen
+    RConversion = 3; // Default Conversion (Fixed 3-2-3-2) Righ Screen
     ConvertType = 2; // Normal default is 2 ("Adaptive 3")
 
     // TODO: unused, delete
@@ -186,7 +186,7 @@ void hicolor_set_type(uint8_t new_value) {
 
 // Equivalent of former file loading
 static void hicolor_image_import(image_data * p_loaded_image) {
-    log_verbose("hicolor_image_import\n");
+    log_verbose("hicolor_image_import()\n");
 
 // if(CheckTGA()==0)        // Valid File
 // {
@@ -258,7 +258,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 // TODO: fix
 // TODO: Operates on RGB data in pic[] copied from RGB data in pic2
 static void hicolor_convert(void) {
-    log_verbose("hicolor_convert\n");
+    log_verbose("hicolor_convert()\n");
 
     for(int x=0; x<160; x++)
     {
@@ -285,7 +285,6 @@ static void hicolor_convert(void) {
 
     if (ConvertType==0)
     {
-        log_verbose("ConvertType==0\n");
         ConvertMethod4();
 
         // TODO: fix this
@@ -304,14 +303,13 @@ static void hicolor_convert(void) {
     }
     else
     {
-        log_verbose("ConvertType!=0\n");
         DoOtherConversion(ConvertType-1);
     }
 }
 
 
 static void hicolor_save(const char * fname_base) {
-    log_verbose("hicolor_save\n");
+    log_verbose("hicolor_save()\n");
     ExportTileSet(fname_base);
     ExportPalettes(fname_base);
     ExportAttrMap(fname_base);
@@ -320,7 +318,7 @@ static void hicolor_save(const char * fname_base) {
 
 // Currently expects 160x144 x RGB888
 void hicolor_process_image(image_data * p_loaded_image, const char * fname_base) {
-    log_verbose("hicolor_process_image. fname_base: \"%s\"\n", fname_base);
+    log_verbose("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
 
     hicolor_image_import(p_loaded_image);
     hicolor_convert();
@@ -679,6 +677,7 @@ u8    SplitData[80][4]=
 
 unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height)
 {
+    log_debug("ImageRating()\n");
     unsigned int    tot;
     int                x,y;
     unsigned int    accum=0;
@@ -703,7 +702,7 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
 // TODO: rename to something that aligns with other convert functions
 void DoOtherConversion(int ConvertType)
 {
-
+    log_verbose("DoOtherConversion()\n");
     int        res;
     int        x,y,z,i;
     int        StartSplit=0;
@@ -847,6 +846,7 @@ void DoOtherConversion(int ConvertType)
             raw[1][x][y][2] = GBView.rgbBlue;
         }
     }
+    log_progress("\n");
 }
 
 
@@ -859,6 +859,7 @@ void DoOtherConversion(int ConvertType)
 // TODO: rename to something that aligns with other convert functions
 int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType)
 {
+    log_debug("ConvertMethod1()\n");
     u32        Accum,width,x1,ts,tw,y2,x2,os;
     s32        x,y;
     s32        i,j;
@@ -867,8 +868,17 @@ int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, in
 
     BestQuantLine=0xffffffff;
 
+log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, ConvertType=%d)\n",
+            StartX, Width, StartY, Height, StartJ, FinishJ, ConvertType);
+// (StartX=0, Width=1, StartY=0, Height=18, StartJ=0, FinishJ=1, ConvertType=0)
+// (StartX=0, Width=1, StartY=0, Height=18, StartJ=0, FinishJ=1, ConvertType=0)
+
+
+
+
     for(x=StartX;x<(StartX+Width);x++)
     {
+        // TODO: This may be related to the "last line, left side" bug. Why is there the offset again? And only on first line?
         if (x==0)        //add Y-offset for left of image.
             os=1;
         else
@@ -885,11 +895,9 @@ int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, in
                 width+=TileWidth[i];
             }
 
-
-
             for(y=StartY*4;y<(StartY+Height)*4;y++)
             {
-//                 SendDlgItemMessage(Ghdwnd,IDC_PROGRESS,PBM_STEPIT,0,0); // TODO: progress bar indicator?
+                log_progress(".");
 
                 for(x1=0;x1<4;x1++)
                 {
@@ -900,9 +908,22 @@ int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, in
                     {
                         for(x2=0;x2<tw;x2++)
                         {
+                            // i is iterating over r/g/b slots for the current pixel
                             for(i=0;i<3;i++)
                             {
-                                *(Data+(tw*3*y2)+x2*3+i)=pic[x*80+ts+x2][y*2+y2-os][i];
+                                if (i == 0) {
+                                    if ((y*2+y2) < os) {
+                                        log_debug("*(Data+(%d*3*%d)+%d*3+%d) = pic[%d*80+%d+%d][%d*2+%d-%d][%d];   ", tw, y2, x2, i,   x, ts, x2,   y, y2, os, i);
+                                        log_debug("*(Data+(%d)=pic[%d][%d][%d];\n", (tw*3*y2)+x2*3+i, x*80+ts+x2, y*2+y2-os, i);
+                                        log_debug("^^^------------------<<<-----\n");
+                                    }
+                                }
+                                // *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][y*2+y2-os][i];
+// TODO: CRASHFIX NEEDED HERE
+// log_debug("** Better CRASHFIX NEEDED HERE\n");
+                                // Prevent segfault from negative array index when y==0, y2==0, and os==1
+                                u32 temp_idx = ((y*2+y2) < os) ? 0 : (y*2+y2-os);
+                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][temp_idx][i];
                             }
                         }
                     }
@@ -938,11 +959,20 @@ int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, in
                         {
                             col=Picture256[y2*tw+x2];
 
-                            out[x*80+x2+ts][y*2+y2-os]=col;
+                            // out[x*80+x2+ts][y*2+y2-os]=col;
+                            if ((y*2+y2) < os) {
+                                // log_debug("** Better CRASHFIX NEEDED HERE #2\n");
+                            }
+                            // Prevent segfault from negative array index when y==0, y2==0, and os==1
+                            u32 temp_idx = ((y*2+y2) < os) ? 0 : (y*2+y2-os);
+                            out[x*80+x2+ts][temp_idx]=col;
 
                             for(i=0;i<3;i++)
                             {
                                 *(pBitsdest+(143-(y*2+y2-os))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
+// log_debug("** Better CRASHFIX NEEDED HERE #3\n");
+                                // Prevent segfault from negative array index when y==0, y2==0, and os==1
+                                // *(pBitsdest+(143-(temp_idx))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
 
                             }
                         }
