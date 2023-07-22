@@ -553,7 +553,6 @@ void ConvertMethod4(void)
 
     res=DetermineBestLeft(StartSplit,NumSplit);
 
-    log_debug("RemapGB()\n");
     RemapGB(0,res,1);
 
     switch(RConversion)
@@ -583,9 +582,7 @@ void ConvertMethod4(void)
             break;
     }
 
-    log_debug("RemapGB()\n");
-    RemapGB(1,StartSplit,NumSplit);
-    log_debug("RemapPCtoGBC()\n");
+    RemapGB(1,StartSplit,NumSplit);    
     RemapPCtoGBC();
 }
 
