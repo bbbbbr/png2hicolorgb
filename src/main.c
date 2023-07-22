@@ -166,6 +166,8 @@ int handle_args(int argc, char * argv[]) {
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
 
+        } else if (strstr(argv[i], "-vD") == argv[i]) {
+            log_set_level(OUTPUT_LEVEL_DEBUG);
         } else if (strstr(argv[i], "-vV") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_VERBOSE);
         } else if (strstr(argv[i], "-vE") == argv[i]) {
