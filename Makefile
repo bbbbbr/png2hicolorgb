@@ -23,6 +23,7 @@ MKDIRS = $(OBJDIR) $(BINDIR) $(PACKDIR) $(EXTRA_OBJDIRS)
 
 INCS = -I"$(SRCDIR)" -I"$(LODEPNGDIR)" -I"$(HICOLORDIR)"
 CFLAGS = $(INCS) -Wno-format-truncation
+CFLAGS += -MMD -MP
 
 
 
@@ -109,6 +110,11 @@ package:
 	${MAKE} wincrosszip DRAG_AND_DROP_MODE=TRUE
 	${MAKE} clean
 	${MAKE} linuxzip
+
+# For -MMD and -MP
+# Dependencies
+DEPS = $(COBJ:%.o=%.d)
+-include $(DEPS)
 
 
 # create necessary directories after Makefile is parsed but before build
