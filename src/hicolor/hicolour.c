@@ -347,7 +347,7 @@ void ExportTileSet(const char * fname_base)
     u8       dx,dy;
     u8       c;
 
-    log_verbose("Writing Tile..\n");
+    log_verbose("Writing Tile\n");
     strcpy(filename, fname_base);
     strcat(filename, ".til");
 
@@ -395,7 +395,7 @@ void ExportPalettes(const char * fname_base)
     s32      i, j, k;
     s32      r,g,b,v;
 
-    log_verbose("Writing Palette..\n");
+    log_verbose("Writing Palette\n");
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
 
@@ -443,7 +443,7 @@ void ExportAttrMap(const char * fname_base)
     s32     i, x, y;
     uint8_t buf, pal;
 
-    log_verbose("Writing Tile ID Map..\n");
+    log_verbose("Writing Tile ID Map\n");
     strcpy(filename, fname_base);
     strcat(filename, ".map");
 
@@ -460,7 +460,7 @@ void ExportAttrMap(const char * fname_base)
         set_exit_error();
 
 
-    log_verbose("Writing Attribute Map..\n");
+    log_verbose("Writing Attribute Map\n");
     strcpy(filename, fname_base);
     strcat(filename, ".atr");
 
@@ -490,6 +490,7 @@ void ExportAttrMap(const char * fname_base)
 void ConvertMethod4(void)
 {
 
+    log_debug("ConvertMethod4()\n");
     u8                StartSplit=0;
     u8                NumSplit=1;
     u16               Steps=1;
@@ -552,7 +553,7 @@ void ConvertMethod4(void)
 
     res=DetermineBestLeft(StartSplit,NumSplit);
 
-
+    log_debug("RemapGB()\n");
     RemapGB(0,res,1);
 
     switch(RConversion)
@@ -582,7 +583,9 @@ void ConvertMethod4(void)
             break;
     }
 
+    log_debug("RemapGB()\n");
     RemapGB(1,StartSplit,NumSplit);
+    log_debug("RemapPCtoGBC()\n");
     RemapPCtoGBC();
 }
 

@@ -16,6 +16,7 @@ s32				avgr,avgg,avgb;						// Colour averages
 
 void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 {
+    log_debug("RemapGB()\n");
 	u32		closest;
 	u32		a1,b1,c1,d1,x,y,dx,dx2,dy;
 	s32		cx,cy,y2;
@@ -309,6 +310,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 
 void RemapPCtoGBC( void )
 {
+    log_debug("RemapPCtoGBC()\n");
 	u8		MastX,MastY;
 	u8		Line;
 	u8		width;
