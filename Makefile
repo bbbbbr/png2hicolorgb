@@ -74,10 +74,10 @@ linux: $(COBJ)
 	$(CC) $(CFLAGS) -o $(BIN) $^ $(LDFLAGS)
 
 cleanobj:
-	$(DEL) $(COBJ)
+	$(DEL) $(COBJ) $(DEPS)
 
 clean:
-	$(DEL) $(COBJ) $(BIN_WIN) $(BIN)
+	$(DEL) $(COBJ) $(BIN_WIN) $(BIN) $(DEPS)
 
 macoszip: macos
 	mkdir -p $(PACKDIR)
