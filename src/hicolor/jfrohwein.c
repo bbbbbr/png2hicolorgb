@@ -557,7 +557,8 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
     u32        SmallestError;
     u32        m1,m2,m3,m4;
     u32        ErrorTerm;
-    u32        cx,cy;
+    // u32        cx,cy;  // Unsigned in original code, with a < 0 guard that doesn't work and causes a segfault
+    s32        cx,cy;
 
     u32        closest;
     u32        Line=0;
@@ -631,7 +632,6 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
                                             {
                                                 for(dx=0; dx<TileWidth[x]; dx++)    // Scan column of tile.
                                                 {
-                    //log_debug("     * dx=%d,dy=%d\n",dx, dy);
                                                     cx = TileOffset[x] + dx;        // Get X-index into image.
 
                                                     cy = MastY*8+y*2-os+dy;            // Get row (Y) index.
