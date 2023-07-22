@@ -11,6 +11,8 @@ enum output_levels {
     OUTPUT_LEVEL_QUIET
 };
 
+#define log_progress log_verbose
+
 void log_set_level(int new_output_level);
 void log_debug(const char * format, ...);
 void log_verbose(const char * format, ...);
