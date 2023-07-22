@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// #include "resource.h"
 #include "defines.h"
 #include "jfrohwein.h"
 #include "hicolour.h"
@@ -44,6 +43,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 
 		for(j=StartSplit;j<(StartSplit+NumSplit);j++)
 		{
+            log_progress(".");
 			Accum=0;
 			width=0;
 			for(i=0;i<4;i++)
@@ -300,6 +300,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 
 		Best[MastX][MastY]=Line;
 	}
+    log_progress("\n");
 }
 
 
@@ -524,7 +525,7 @@ int CountColorsInCell(int x, int y, int sx, int os)
 
 		}
 	}
-	return(count);
+    	return(count);
 }
 
 
@@ -540,6 +541,7 @@ int CountColorsInCell(int x, int y, int sx, int os)
 
 u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 {
+    log_debug("DetermineBestLeft()\n");
 	u32		Accum;
 	s8		os;
 	u32		BestSoFar;
@@ -554,6 +556,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 	u32		m1,m2,m3,m4;
 	u32		ErrorTerm;
 	u32		cx,cy;
+
 	u32		closest;
 	u32		Line=0;
 
@@ -566,7 +569,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 
 		for(MastY=0;MastY<18;MastY++)									// Try evert attribute block on the Y Axis
 		{
-// TODO : progress message?			SendDlgItemMessage(Ghdwnd,IDC_PROGRESS,PBM_STEPIT,0,0);		// Update windows with our progress
+            log_progress(".");
 			width=0;
 
 			for(i=0;i<4;i++)											// There are 4 attrib blocks on the left hand side of the screen
@@ -606,7 +609,6 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 					y2 = (MastY*8+y*2)/2;								// Setup Y-index into Pal structure.
 
 					sx = TileWidth[x];
-
 					if ( CountColorsInCell(TileOffset[x],MastY*8+y*2,sx,os) > 4 )	// Just how many colours are in this section, ignore if less than 4 colours
 					{
 						sx = sx/2;
@@ -627,6 +629,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 											{
 												for(dx=0; dx<TileWidth[x]; dx++)	// Scan column of tile.
 												{
+                    //log_debug("     * dx=%d,dy=%d\n",dx, dy);
 													cx = TileOffset[x] + dx;		// Get X-index into image.
 
 													cy = MastY*8+y*2-os+dy;			// Get row (Y) index.
@@ -636,7 +639,6 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 													a1= (Pal[x][y2][m1][0]-(int)pic[cx][cy][0]) * (Pal[x][y2][m1][0]-(int)pic[cx][cy][0]) +		// Calc RGB Distance
 														(Pal[x][y2][m1][1]-(int)pic[cx][cy][1]) * (Pal[x][y2][m1][1]-(int)pic[cx][cy][1]) +
 														(Pal[x][y2][m1][2]-(int)pic[cx][cy][2]) * (Pal[x][y2][m1][2]-(int)pic[cx][cy][2]) ;
-
 													b1= (Pal[x][y2][m2][0]-(int)pic[cx][cy][0]) * (Pal[x][y2][m2][0]-(int)pic[cx][cy][0]) +
 														(Pal[x][y2][m2][1]-(int)pic[cx][cy][1]) * (Pal[x][y2][m2][1]-(int)pic[cx][cy][1]) +
 														(Pal[x][y2][m2][2]-(int)pic[cx][cy][2]) * (Pal[x][y2][m2][2]-(int)pic[cx][cy][2]) ;
@@ -683,7 +685,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 			Line=j;				// Store the position of the best fit.
 		}
 	}
-
+    log_progress("\n");
 	return Line;
 }
 
