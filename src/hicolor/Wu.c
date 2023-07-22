@@ -42,7 +42,8 @@ u16		*Qadd;          // *must* be unsigned?
 u8		*TrueColorPic;
 
 
-s16		AQadd[7*8*3*2];
+// s16		AQadd[7*8*3*2];  // Signed in original code, type clash with QAdd and bit shifting
+u16     AQadd[7*8*3*2];
 u8		Atag[BOX * BOX * BOX];
 
 

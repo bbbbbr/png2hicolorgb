@@ -21,6 +21,7 @@ int handle_args(int argc, char * argv[]);
 static bool matches_extension(char *, char *);
 static void init(void);
 void cleanup(void);
+static void set_drag_and_drop_mode_defaults(void);
 
 image_data src_image;
 char filename_in[MAX_STR_LEN] = {'\0'};

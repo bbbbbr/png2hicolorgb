@@ -47,7 +47,7 @@ typedef struct
     int		Bmin, Bmax;
     int		volume;			// The volume (actually 2-norm) of the box
     long	colorcount;		//The number of nonzero histogram cells within this box */
-} box , *boxptr;
+} mbox, *boxptr;
 
 
 

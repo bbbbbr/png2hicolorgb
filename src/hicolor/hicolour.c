@@ -74,8 +74,6 @@ incorperate the changes into newer versions. (GlenCook@hotmail.com)
 
 int    br,bg,bb;
 
-u8        SplitData[80][4];
-
 typedef struct
 {
     u8        p1;

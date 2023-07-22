@@ -18,7 +18,7 @@ s32			Agrn_n_row[60];
 s32			Agrn_p_row[60];
 s32			Ablu_n_row[60];
 s32			Ablu_p_row[60];
-box			Abox[4];
+mbox			Abox[4];
 s32			Atable[514];
 u8			Picture256[160*144*3];
 u8			QuantizedPalette[256][3];
