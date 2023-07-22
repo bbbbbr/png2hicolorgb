@@ -115,7 +115,7 @@ static void display_help(void) {
         "        3:Wu Quantiser\n"
         "-cL:N : Set Left  screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
         "-cR:N : Set Right screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
-        "-sP   : Show available screen conversion pattern list (no processing)\n"
+        "-sP   : Show screen conversion patterns list (no processing)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png -cA:3 0cL:// -o:outputfilename -n:somevarname\"\n"

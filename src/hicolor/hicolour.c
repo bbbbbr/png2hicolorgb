@@ -582,7 +582,7 @@ void ConvertMethod4(void)
             break;
     }
 
-    RemapGB(1,StartSplit,NumSplit);    
+    RemapGB(1,StartSplit,NumSplit);
     RemapPCtoGBC();
 }
 
