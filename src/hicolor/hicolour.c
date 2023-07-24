@@ -88,12 +88,11 @@ typedef struct
 } IMG_TYPE;
 
 
-
 // u8            QR[144][160][3];
 u8            TileOffset[4];                 // Offset into screen for attribute start
 u8            TileWidth[4];                  // No of character attributes width
-u8            Pal[8][72][28][3];             // Palettes for every other line
-u8            IdealPal[8][72][4][3];         // The best fit palette
+u8            Pal[8][Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
+u8            IdealPal[8][Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
 u8            pic[160][144][3];              // Original Picture
 u8            pic2[160][144][3];             // Output picture
 u8            out[160][144];                 // Output data
@@ -104,7 +103,7 @@ u8            raw[2][160][144][3];           // Original Picture Raw format.
 // TODO: delete?
 s32           ViewType=0;                    // Type of view to show: 0 = Normal , 1 = GB Color
 
-u8            Best[2][18];                   // Best Attribute type to use
+u8            Best[2][Y_HEIGHT_IN_TILES_LR_RNDUP];                   // Best Attribute type to use
 // TODO: delete
 // s32           GWeight;                  // Colour weighting Green
 // s32           RWeight;                  // Colour weighting Red
@@ -120,7 +119,7 @@ uint8_t *     pBuffer;
 // u8            Message[2000];
 s32           ConvertType; //=2;
 
-u8            Data[160*144*3];
+u8            Data[160*144*3];  // Gets used for quantizing regions. Maybe other things too?
 
 u32           TempD;
 s32           BestLine=0;  // TODO: convert to local var
@@ -271,14 +270,14 @@ static void hicolor_convert(void) {
             pic[x][y][0] = pic2[x][y][0];
             pic[x][y][1] = pic2[x][y][1];
             pic[x][y][2] = pic2[x][y][2];
+
             for(int i=0; i<3; i++)
             {
                 // TODO: delete, without weighting above values will never be > 255
-                if(pic[x][y][i] > 255)
-                    pic[x][y][i] = 255;
+                // if(pic[x][y][i] > 255)
+                //     pic[x][y][i] = 255;
 
                 *(Data + y*160*3+x*3+i) = pic[x][y][i];
-                // Data[y*160*3+x*3+i] = pic[x][y][i];
             }
         }
     }
@@ -287,7 +286,6 @@ static void hicolor_convert(void) {
     {
         ConvertMethod4();
 
-        // TODO: fix this
         for(int y=0; y<144; y++)
         {
             for(int x=0; x<160; x++)
@@ -391,20 +389,20 @@ void ExportPalettes(const char * fname_base)
     s32      i, j, k;
     s32      r,g,b,v;
 
-    log_verbose("Writing Palette\n");
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
+    log_verbose("Writing Palette to \"%s\" (%s)\n", fname_base, filename);
 
-    #define OUTBUF_SZ_PALS ((72*2 * 4 * 4 * 2) + 1) // TODO: make this controllable
+    #define OUTBUF_SZ_PALS (((Y_REGION_COUNT_BOTH_SIDES) * 4 * 4 * 2) + 1) // TODO: make this controllable
     uint8_t output_buf[OUTBUF_SZ_PALS];
     uint8_t * p_buf = output_buf;
 
 
-    for (i = 0; i < 72*2; i++) // Number of palette sets
+    for (i = 0; i < (Y_REGION_COUNT_BOTH_SIDES); i++) // Number of palette sets (left side updates + right side updates)
     {
-        for (j = 0; j < 4; j++) // each palette in the set
+        for (j = 0; j < 4; j++) // Each palette in the set
         {
-            for(k=0; k<4;k++)
+            for(k=0; k<4;k++) // Each color in the palette
             {
                 r = IdealPal[(i%2)*4+j][i/2][k][0];
                 g = IdealPal[(i%2)*4+j][i/2][k][1];
@@ -413,6 +411,7 @@ void ExportPalettes(const char * fname_base)
                 // TODO: Converting to BGR555 probably
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
 
+                // 2 bytes per color
                 *p_buf++ = (u8)(v & 255);
                 *p_buf++ = (u8)(v / 256);
             }
@@ -422,6 +421,7 @@ void ExportPalettes(const char * fname_base)
     // TODO: What is this and why? :)
     *p_buf++ = 0x2d;
 
+    log_verbose("Writing Palette to \"%s\" (%s)\n", fname_base, filename);
     if (!file_write_from_buffer(filename, output_buf, OUTBUF_SZ_PALS))
         set_exit_error();
 
@@ -548,8 +548,7 @@ void ConvertMethod4(void)
     }
 
     res=DetermineBestLeft(StartSplit,NumSplit);
-
-    RemapGB(0,res,1);
+    RemapGB(CONV_SIDE_LEFT,res,1);
 
     switch(RConversion)
     {
@@ -578,7 +577,7 @@ void ConvertMethod4(void)
             break;
     }
 
-    RemapGB(1,StartSplit,NumSplit);
+    RemapGB(CONV_SIDE_RIGHT,StartSplit,NumSplit);
     RemapPCtoGBC();
 }
 
@@ -767,9 +766,11 @@ void DoOtherConversion(int ConvertType)
     }
 
 
-    res=ConvertMethod1(0,1,0,18,StartSplit,NumSplit,ConvertType);        // Step through all options
-
-    ConvertMethod1(0,1,0,18,res,1,ConvertType);
+    // Convert left side with one extra tile of height to fix
+    // the glitching where the last scanline on left bottom region
+    // lacks tile and palette data
+    res=ConvertMethod1(0,1,0,Y_HEIGHT_IN_TILES_LEFT,StartSplit,NumSplit,ConvertType);        // Step through all options
+    ConvertMethod1(0,1,0,Y_HEIGHT_IN_TILES_LEFT,res,1,ConvertType);
 
     for(y=0;y<189;y++)
         Best[0][y]=res;
@@ -860,7 +861,7 @@ void DoOtherConversion(int ConvertType)
 int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType)
 {
     log_debug("ConvertMethod1()\n");
-    u32        Accum,width,x1,ts,tw,y2,x2,os;
+    u32        Accum,width,x1,ts,tw,y2,x2,y_offset;
     s32        x,y;
     s32        i,j;
     u8        col;
@@ -868,21 +869,15 @@ int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, in
 
     BestQuantLine=0xffffffff;
 
-log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, ConvertType=%d)\n",
-            StartX, Width, StartY, Height, StartJ, FinishJ, ConvertType);
-// (StartX=0, Width=1, StartY=0, Height=18, StartJ=0, FinishJ=1, ConvertType=0)
-// (StartX=0, Width=1, StartY=0, Height=18, StartJ=0, FinishJ=1, ConvertType=0)
-
-
-
-
     for(x=StartX;x<(StartX+Width);x++)
     {
-        // TODO: This may be related to the "last line, left side" bug. Why is there the offset again? And only on first line?
-        if (x==0)        //add Y-offset for left of image.
-            os=1;
+        // Left side of screen is offset by -1 Y
+        // (Left side calcs hang off top and bottom of screen
+        // due to Left/Right palette update interleaving)
+        if (x == CONV_SIDE_LEFT)
+            y_offset = CONV_Y_SHIFT_UP_1;
         else
-            os=0;
+            y_offset = CONV_Y_SHIFT_NO;
 
         for(j=StartJ;j<(StartJ+FinishJ);j++)
         {
@@ -906,24 +901,18 @@ log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, Co
 
                     for(y2=0;y2<2;y2++)
                     {
+                        // Skip if Y line is outside image borders (prevents buffer overflow)
+                        // (Left side calcs hang off top and bottom of screen
+                        // due to Left/Right palette update interleaving)
+                        s32 y_line = (y*2+y2-y_offset);
+                        if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
+
                         for(x2=0;x2<tw;x2++)
                         {
                             // i is iterating over r/g/b slots for the current pixel
                             for(i=0;i<3;i++)
                             {
-                                if (i == 0) {
-                                    if ((y*2+y2) < os) {
-                                        log_debug("*(Data+(%d*3*%d)+%d*3+%d) = pic[%d*80+%d+%d][%d*2+%d-%d][%d];   ", tw, y2, x2, i,   x, ts, x2,   y, y2, os, i);
-                                        log_debug("*(Data+(%d)=pic[%d][%d][%d];\n", (tw*3*y2)+x2*3+i, x*80+ts+x2, y*2+y2-os, i);
-                                        log_debug("^^^------------------<<<-----\n");
-                                    }
-                                }
-                                // *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][y*2+y2-os][i];
-// TODO: CRASHFIX NEEDED HERE
-// log_debug("** Better CRASHFIX NEEDED HERE\n");
-                                // Prevent segfault from negative array index when y==0, y2==0, and os==1
-                                u32 temp_idx = ((y*2+y2) < os) ? 0 : (y*2+y2-os);
-                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][temp_idx][i];
+                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][y*2+y2-y_offset][i];
                             }
                         }
                     }
@@ -931,7 +920,6 @@ log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, Co
                     switch(ConvertType)
                     {
                         case 0:
-
                             to_indexed(Data,4,0,TileWidth[x1],2);            // Median Reduction No Dither
                             break;
 
@@ -941,13 +929,17 @@ log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, Co
                             break;
 
                         case 2:
-
                             wuReduce(Data,4,TileWidth[x1]*2);                // Wu Reduction
                             break;
                     }
 
                     for(y2=0;y2<4;y2++)
                     {
+                        // Skip if Y is outside allocated Palette size (prevents buffer overflow)
+                        // (Left side calcs hang off top and bottom of screen
+                        // due to Left/Right palette update interleaving)
+                        if (y >= Y_REGION_COUNT_LR_RNDUP) continue;
+
                         IdealPal[x*4+x1][y][y2][0]=QuantizedPalette[y2][2];
                         IdealPal[x*4+x1][y][y2][1]=QuantizedPalette[y2][1];
                         IdealPal[x*4+x1][y][y2][2]=QuantizedPalette[y2][0];
@@ -957,23 +949,17 @@ log_debug("(StartX=%d, Width=%d, StartY=%d, Height=%d, StartJ=%d, FinishJ=%d, Co
                     {
                         for(x2=0;x2<tw;x2++)
                         {
-                            col=Picture256[y2*tw+x2];
+                            // Skip if Y line is outside image borders (prevents buffer overflow)
+                            // since Left side calcs hang off top and bottom of image/screen
+                            s32 y_line = (y*2+y2-y_offset);
+                            if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
 
-                            // out[x*80+x2+ts][y*2+y2-os]=col;
-                            if ((y*2+y2) < os) {
-                                // log_debug("** Better CRASHFIX NEEDED HERE #2\n");
-                            }
-                            // Prevent segfault from negative array index when y==0, y2==0, and os==1
-                            u32 temp_idx = ((y*2+y2) < os) ? 0 : (y*2+y2-os);
-                            out[x*80+x2+ts][temp_idx]=col;
+                            col=Picture256[y2*tw+x2];
+                            out[x*80+x2+ts][y*2+y2-y_offset]=col;
 
                             for(i=0;i<3;i++)
                             {
-                                *(pBitsdest+(143-(y*2+y2-os))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
-// log_debug("** Better CRASHFIX NEEDED HERE #3\n");
-                                // Prevent segfault from negative array index when y==0, y2==0, and os==1
-                                // *(pBitsdest+(143-(temp_idx))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
-
+                                *(pBitsdest+(143-(y*2+y2-y_offset))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
                             }
                         }
                     }

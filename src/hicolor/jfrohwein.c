@@ -25,9 +25,9 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
     s32        m1,m2,m3,m4;
     s32        p1=0,p2=0,p3=0,p4=0;
     s32        SmallestError;
-    s32        os;
+    s32        y_offset;
     s32        state;
-    s32        MastY;
+    s32        MastY, MastYTileHeight;
     s32        sp;
     u8        j;
 
@@ -37,16 +37,27 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
     u8        Line=0;
     u32        BestSoFar;
 
+    if (MastX == CONV_SIDE_LEFT) {
+        y_offset = CONV_Y_SHIFT_UP_1;
+        MastYTileHeight = Y_HEIGHT_IN_TILES_LEFT; // One extra vertical region due to left offset -1  L/R palette update interleaving
+    }
+    else {
+        y_offset = CONV_Y_SHIFT_NO;
+        MastYTileHeight = Y_HEIGHT_IN_TILES_RIGHT;
+    }
 
-       for(MastY=0;MastY<18;MastY++)
-       {
+    // Loop through Y Tile height on give side Left or Right
+    for(MastY=0;MastY<MastYTileHeight;MastY++)
+    {
         BestSoFar=0x7fffffff;
 
+        // ? Total number of combinations to try
         for(j=StartSplit;j<(StartSplit+NumSplit);j++)
         {
             log_progress(".");
             Accum=0;
             width=0;
+            // There are 4 attrib blocks on the left hand side of the screen
             for(i=0;i<4;i++)
             {
                 TileOffset[i]=width;
@@ -54,19 +65,24 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                 width+=TileWidth[i];
             }
 
+            // There are 4 attrib blocks on the left or right hand side of the screen
             for (x=0; x<4; x++ )
             {
+                // Each attrib block has 4 colour changes in height
                 for (y=0; y<4; y++)
                 {
                     y2 = (MastY*8+y*2)/2;        //setup Y-index into Pal structure.
+
 
                     sx = TileOffset[x]+MastX*80;
                     sx2 = sx + TileWidth[x];
 
                     for (sx3=0;sx<sx2;sx+=2 )
                     {
+                        // Get an average for the pixels in an attrib block
                         AddPixels(sx,MastY*8+y*2,2,2);    //bilerp 2*2 or 3*2 texel.
 
+                        // There could be up to 28 seperate palettes per block
                         Pal[x+MastX*4][y2][sx3][0] = (unsigned char)avgr;
                         Pal[x+MastX*4][y2][sx3][1] = (unsigned char)avgg;
                         Pal[x+MastX*4][y2][sx3][2] = (unsigned char)avgb;
@@ -75,29 +91,29 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                 }
             }
 
+            // Step through the 4 attribute blocks for the left or right side of screen
             for (x=0; x<4; x++ )
             {
+                // Step through the 4 colour changes per attrib block
                 for (y=0; y<4; y++)
                 {
+                    // SmallestError is the one that gets through
                     SmallestError = 0xffffff;
                     state=0;
 
-                    if(MastX==0)
-                        os=1;
-                    else
-                        os=0;
-
+                    // Setup Y-index into Pal structure.
                     y2 = (MastY*8+y*2)/2;        //setup Y-index into Pal structure.
 
                     sx = TileWidth[x];
                     sp = TileOffset[x]+MastX*80;
 
-                    if ( CountColorsInCell(sp,MastY*8+y*2,sx,os) > 4 )
+                    // Just how many colours are in this section
+                    // if less than 4 colours ... skip processing immediately below
+                    if ( CountColorsInCell(sp,MastY*8+y*2,sx,y_offset) > 4 )
                     {
                         sx = sx/2;
 
                         //try all combinations to find lowest error-rate.
-
                         for(m4=0; m4<sx; m4++)
                         {
                             for(m3=0; m3<sx; m3++)
@@ -116,10 +132,15 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                                                 {
                                                     cx = TileOffset[x]+MastX*80 + dx;   //get X-index into image.
 
-                                                    cy = MastY*8+y*2-os+dy; //get row (Y) index.
+                                                    cy = MastY*8+y*2-y_offset+dy; //get row (Y) index.
 
-                                                    if(cy<0) cy=0;
+                                                    // Skip if Y line is outside image borders (prevents buffer overflow)
+                                                    // (Left side calcs hang off top and bottom of screen
+                                                    // due to Left/Right palette update interleaving)
+                                                    s32 y_line = cy;
+                                                    if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
 
+                                                    // Calc RGB Distance
                                                     a1= (Pal[MastX*4+x][y2][m1][0]-(int)pic[cx][cy][0]) * (Pal[MastX*4+x][y2][m1][0]-(int)pic[cx][cy][0]) +
                                                         (Pal[MastX*4+x][y2][m1][1]-(int)pic[cx][cy][1]) * (Pal[MastX*4+x][y2][m1][1]-(int)pic[cx][cy][1]) +
                                                         (Pal[MastX*4+x][y2][m1][2]-(int)pic[cx][cy][2]) * (Pal[MastX*4+x][y2][m1][2]-(int)pic[cx][cy][2]) ;
@@ -137,6 +158,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                                                         (Pal[MastX*4+x][y2][m4][2]-(int)pic[cx][cy][2]) * (Pal[MastX*4+x][y2][m4][2]-(int)pic[cx][cy][2]) ;
 
 
+                                                    // Determine which palette is closest
                                                     closest = d1;
 
                                                     if (c1 < closest)
@@ -152,6 +174,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                                                 }
                                             }
 
+                                            // Store details of smallest distance
                                             if (ErrorTerm < SmallestError)
                                             {
                                                 SmallestError = ErrorTerm;
@@ -168,6 +191,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 
                         Accum+=SmallestError;
 
+                        // Generate a temporary palette from the results
                         TempPal[j][x][y][0][0] = Pal[MastX*4+x][y2][p1][0];
                         TempPal[j][x][y][0][1] = Pal[MastX*4+x][y2][p1][1];
                         TempPal[j][x][y][0][2] = Pal[MastX*4+x][y2][p1][2];
@@ -196,7 +220,7 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
                                 cx = TileOffset[x]+MastX*80;   //get X-index into image.
                                 cx += dx;                            //
 
-                                cy = MastY*8+y*2-os+dy; //get row (Y) index.
+                                cy = MastY*8+y*2-y_offset+dy; //get row (Y) index.
 
                                 switch (state)
                                 {
@@ -277,25 +301,34 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
             }
         }
 
+        // Step through the 4 attribute blocks for the left or right side of screen
         for(x=0;x<4;x++)
         {
+            // Step through the 4 colour changes per attrib block
             for(y=0;y<4;y++)
             {
-                IdealPal[MastX*4+x][MastY*4+y][0][0]=TempPal[Line][x][y][0][0];
-                IdealPal[MastX*4+x][MastY*4+y][0][1]=TempPal[Line][x][y][0][1];
-                IdealPal[MastX*4+x][MastY*4+y][0][2]=TempPal[Line][x][y][0][2];
+                // Skip if Y is outside allocated Palette size (prevents buffer overflow)
+                // (Left side calcs hang off top and bottom of screen
+                // due to Left/Right palette update interleaving)
+                s32 y_line = MastY*4+y;
+                if (y >= Y_REGION_COUNT_LR_RNDUP) continue;
 
-                IdealPal[MastX*4+x][MastY*4+y][1][0]=TempPal[Line][x][y][1][0];
-                IdealPal[MastX*4+x][MastY*4+y][1][1]=TempPal[Line][x][y][1][1];
-                IdealPal[MastX*4+x][MastY*4+y][1][2]=TempPal[Line][x][y][1][2];
+                IdealPal[MastX*4+x][y_line][0][0]=TempPal[Line][x][y][0][0];
+                IdealPal[MastX*4+x][y_line][0][1]=TempPal[Line][x][y][0][1];
+                IdealPal[MastX*4+x][y_line][0][2]=TempPal[Line][x][y][0][2];
 
-                IdealPal[MastX*4+x][MastY*4+y][2][0]=TempPal[Line][x][y][2][0];
-                IdealPal[MastX*4+x][MastY*4+y][2][1]=TempPal[Line][x][y][2][1];
-                IdealPal[MastX*4+x][MastY*4+y][2][2]=TempPal[Line][x][y][2][2];
+                IdealPal[MastX*4+x][y_line][1][0]=TempPal[Line][x][y][1][0];
+                IdealPal[MastX*4+x][y_line][1][1]=TempPal[Line][x][y][1][1];
+                IdealPal[MastX*4+x][y_line][1][2]=TempPal[Line][x][y][1][2];
 
-                IdealPal[MastX*4+x][MastY*4+y][3][0]=TempPal[Line][x][y][3][0];
-                IdealPal[MastX*4+x][MastY*4+y][3][1]=TempPal[Line][x][y][3][1];
-                IdealPal[MastX*4+x][MastY*4+y][3][2]=TempPal[Line][x][y][3][2];
+                IdealPal[MastX*4+x][y_line][2][0]=TempPal[Line][x][y][2][0];
+                IdealPal[MastX*4+x][y_line][2][1]=TempPal[Line][x][y][2][1];
+                IdealPal[MastX*4+x][y_line][2][2]=TempPal[Line][x][y][2][2];
+
+                IdealPal[MastX*4+x][y_line][3][0]=TempPal[Line][x][y][3][0];
+                IdealPal[MastX*4+x][y_line][3][1]=TempPal[Line][x][y][3][1];
+                IdealPal[MastX*4+x][y_line][3][2]=TempPal[Line][x][y][3][2];
+
             }
         }
 
@@ -311,26 +344,30 @@ void RemapGB(u8 MastX, u8 StartSplit, u8 NumSplit)
 void RemapPCtoGBC( void )
 {
     log_debug("RemapPCtoGBC()\n");
-    u8        MastX,MastY;
+    u8        MastX,MastY, MastYTileHeight;
     u8        Line;
     u8        width;
     u8        i,x,y,z;
     u8        gbcolor;
     u8        r,g,b;
     u32        SmallestError;
-    u8        os;
+    u8        y_offset;
     u8        y2;
     u8        sx;
     u8        dx,dy;
-    u8        cx,cy;
+    // u8        cx,cy; // Unsigned in original code, but needs to be able to go negative
+    s32        cx,cy;
     u32        a1,b1,c1,d1;
     u32        closest;
 
 
-
+    // Generate attribute table from the pattern(?) Best Match table
+    // No vertical shifting for attributes since they're tile grid aligned
+    // MastX = 0 is Left side, 1 is Right side
     for(MastX=0;MastX<2;MastX++)
     {
-        for(MastY=0;MastY<18;MastY++)
+        // Y Tile grid 0..17
+        for(MastY=0;MastY < 18;MastY++)
         {
             Line=Best[MastX][MastY];
             width=0;
@@ -342,14 +379,26 @@ void RemapPCtoGBC( void )
             }
 
             for(x=0;x<4;x++)
-                for(z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++)
+                for(z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++) {
                     AttribTable[MastY][MastX*10+z]=x+MastX*4;
+                }
         }
     }
 
+    // MastX = 0 is Left side, 1 is Right side
     for(MastX=0;MastX<2;MastX++)
     {
-        for(MastY=0;MastY<18;MastY++)
+        // TODO: could be a function GetSideYTileHeight(MastX);
+        if(MastX == CONV_SIDE_LEFT) {
+            MastYTileHeight = Y_HEIGHT_IN_TILES_LEFT; // One extra vertical region due to left offset -1  L/R palette update interleaving
+            y_offset = CONV_Y_SHIFT_UP_1;
+        }
+        else {
+            MastYTileHeight = Y_HEIGHT_IN_TILES_RIGHT;
+            y_offset = CONV_Y_SHIFT_NO;
+        }
+
+        for(MastY=0;MastY < MastYTileHeight;MastY++)
         {
             Line=Best[MastX][MastY];
             width=0;
@@ -367,11 +416,6 @@ void RemapPCtoGBC( void )
 
                     SmallestError = 0x7fffffff;
 
-                    if (MastX==0)        //add Y-offset for left of image.
-                        os=1;
-                    else
-                        os=0;
-
                     y2 = (MastY*8+y*2)/2;        //setup Y-index into Pal structure.
 
                     sx = TileWidth[x];
@@ -387,7 +431,12 @@ void RemapPCtoGBC( void )
                             cx = TileOffset[x]+MastX*80;   //get X-index into image.
                             cx += dx;
 
-                            cy = MastY*8+y*2-os+dy; //get row (Y) index.
+                            cy = MastY*8+y*2-y_offset+dy; //get row (Y) index.
+
+                            // Clamp CY to actual screen range (prevents buffer overflow)
+                            // (Left side calcs hang off top and bottom of screen
+                            // due to Left/Right palette update interleaving)
+                            if ((cy < 0) || (cy > 143)) continue;
 
 
                             a1=    ((IdealPal[MastX*4+x][y2][0][0]-(int)pic[cx][cy][0]) * (IdealPal[MastX*4+x][y2][0][0]-(int)pic[cx][cy][0]) ) +
@@ -432,20 +481,16 @@ void RemapPCtoGBC( void )
                             g = IdealPal[MastX*4+x][y2][gbcolor][1];
                             b = IdealPal[MastX*4+x][y2][gbcolor][2];
 
+                            out[cx][cy] = gbcolor;
+                            raw[0][cx][cy][0] = r;
+                            raw[0][cx][cy][1] = g;
+                            raw[0][cx][cy][2] = b;
 
-                            if ((MastY*8+y*2-os+dy) >= 0)
-                            {
-                                out[cx][MastY*8+y*2-os+dy] = gbcolor;
-                                raw[0][cx][MastY*8+y*2-os+dy][0] = r;
-                                raw[0][cx][MastY*8+y*2-os+dy][1] = g;
-                                raw[0][cx][MastY*8+y*2-os+dy][2] = b;
+                            RGBQUAD GBView=translate(raw[0][cx][cy]);
 
-                                RGBQUAD GBView=translate(raw[0][cx][MastY*8+y*2-os+dy]);
-
-                                raw[1][cx][MastY*8+y*2-os+dy][0] = GBView.rgbRed;
-                                raw[1][cx][MastY*8+y*2-os+dy][1] = GBView.rgbGreen;
-                                raw[1][cx][MastY*8+y*2-os+dy][2] = GBView.rgbBlue;
-                            }
+                            raw[1][cx][cy][0] = GBView.rgbRed;
+                            raw[1][cx][cy][1] = GBView.rgbGreen;
+                            raw[1][cx][cy][2] = GBView.rgbBlue;
                         }
                     }
                 }
@@ -472,6 +517,12 @@ void AddPixels (int xs, int ys, int width, int height)
     {
         for(x=0; x<width; x++)
         {
+            // Skip if Y line is outside image borders (prevents buffer overflow)
+            // (Left side calcs hang off top and bottom of screen
+            // due to Left/Right palette update interleaving)
+            s32 y_line = ys + y;
+            if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
+
             avgr += pic[xs+x][ys+y][0];        //
             avgg += pic[xs+x][ys+y][1];        // Add to average.
             avgb += pic[xs+x][ys+y][2];        //
@@ -479,9 +530,11 @@ void AddPixels (int xs, int ys, int width, int height)
         }
     }
 
+    if (cnt > 0) {
     avgr /= cnt;                             //
     avgg /= cnt;                            // RGB average / pixels-averaged.
     avgb /= cnt;                             //
+    }
 }
 
 
@@ -491,7 +544,7 @@ void AddPixels (int xs, int ys, int width, int height)
 // This function will step through every entry of a cell, which could be up to 28 pixels
 // wide and return the number of unique colours used within that cell.
 
-int CountColorsInCell(int x, int y, int sx, int os)
+int CountColorsInCell(int x, int y, int sx, int y_offset)
 {
     s32        c,cx,cy,dx,dy;
     s32        count = 0;
@@ -505,7 +558,13 @@ int CountColorsInCell(int x, int y, int sx, int os)
         {
             cx = x + dx;     //get X-index into image.
 
-            cy = y-os+dy;
+            cy = y-y_offset+dy;
+
+            // Skip if Y line is outside image borders (prevents buffer overflow)
+            // (Left side calcs hang off top and bottom of screen
+            // due to Left/Right palette update interleaving)
+            s32 y_line = cy;
+            if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
 
             found = 0;
 
@@ -545,9 +604,9 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
 {
     log_debug("DetermineBestLeft()\n");
     u32        Accum;
-    s8        os;
+    s8        y_offset;
     u32        BestSoFar;
-    u32        MastY;
+    u32        MastY, MastYTileHeight;
     u32        width;
     u32        x,y,sx,sx2,sx3,y2;
     u32        i;
@@ -563,14 +622,17 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
     u32        closest;
     u32        Line=0;
 
-      BestSoFar=0x7fffffff;
-    os=1;
+    BestSoFar=0x7fffffff;
+
+   // Implied: CONV_SIDE_LEFT
+   y_offset = CONV_Y_SHIFT_UP_1;
+   MastYTileHeight = Y_HEIGHT_IN_TILES_LEFT; // 18 + 1 for extra tile height on left side
 
     for(j=StartSplit;j<(StartSplit+NumSplit);j++)                        // Total number of combinations to try
     {
          Accum=0;                                                        // Each combination has a accumalative score
 
-        for(MastY=0;MastY<18;MastY++)                                    // Try evert attribute block on the Y Axis
+        for(MastY=0;MastY < MastYTileHeight;MastY++)                                    // Try evert attribute block on the Y Axis
         {
             log_progress(".");
             width=0;
@@ -612,7 +674,7 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
                     y2 = (MastY*8+y*2)/2;                                // Setup Y-index into Pal structure.
 
                     sx = TileWidth[x];
-                    if ( CountColorsInCell(TileOffset[x],MastY*8+y*2,sx,os) > 4 )    // Just how many colours are in this section, ignore if less than 4 colours
+                    if ( CountColorsInCell(TileOffset[x],MastY*8+y*2,sx,y_offset) > 4 )    // Just how many colours are in this section, ignore if less than 4 colours
                     {
                         sx = sx/2;
 
@@ -634,9 +696,13 @@ u8 DetermineBestLeft(u8 StartSplit, u8 NumSplit)
                                                 {
                                                     cx = TileOffset[x] + dx;        // Get X-index into image.
 
-                                                    cy = MastY*8+y*2-os+dy;            // Get row (Y) index.
+                                                    cy = MastY*8+y*2-y_offset+dy;            // Get row (Y) index.
 
-                                                    if(cy<0) cy=0;
+                                                    // Skip if Y line is outside image borders (prevents buffer overflow)
+                                                    // (Left side calcs hang off top and bottom of screen
+                                                    // due to Left/Right palette update interleaving)
+                                                    s32 y_line = cy;
+                                                    if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
 
                                                     a1= (Pal[x][y2][m1][0]-(int)pic[cx][cy][0]) * (Pal[x][y2][m1][0]-(int)pic[cx][cy][0]) +        // Calc RGB Distance
                                                         (Pal[x][y2][m1][1]-(int)pic[cx][cy][1]) * (Pal[x][y2][m1][1]-(int)pic[cx][cy][1]) +

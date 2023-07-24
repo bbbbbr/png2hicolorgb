@@ -13,10 +13,10 @@
 
 // For displaying available conversion patterns to the user
 #define HELP_CONV_PATTERN_STR \
-    "Available Conversion Patterns for -cL:N and -cR:N\n" \
+    "Available conversion attribute pattern widths for -cL:N and -cR:N\n" \
     "\n" \
-    "- Fixed patterns are faster but less optimal than adaptive\n" \
-    "- Adaptive pattern speed/quality is 1: fastest, 2: medium, 3: slowest\n" \
+    "- Fixed pattern widths are faster but less optimal than adaptive\n" \
+    "- Adaptive pattern width speeds are 1: fastest, 2: medium, 3: slowest (slower = higher quality)\n" \
     "\n" \
     "  0: Adaptive-1   1: Adaptive-2   2: Adaptive-3   3: 3-2-3-2      4: 2-3-2-3 \n" \
     "  5: 2-2-3-3      6: 2-3-3-2      7: 3-2-2-3      8: 3-3-2-2      9: 4-2-2-2 \n" \
@@ -40,10 +40,14 @@
 extern    u8               TileOffset[4];               // Offset into screen for attribute start
 extern    u8               TileWidth[4];                // No of character attributes width
 extern    u8               SplitData[80][4];
-extern    u8               Pal[8][72][28][3];           // Palettes for every other line
+// extern    u8               Pal[8][72][28][3];           // Palettes for every other line
+extern    u8               Pal[8][Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
 extern    u8               pic[160][144][3];            // Original Picture
-extern    u8               IdealPal[8][72][4][3];       // The best fit palette
-extern    u8               Best[2][18];                 // Best Attribute type to use
+//extern    u8               IdealPal[8][72][4][3];       // The best fit palette
+extern    u8               IdealPal[8][Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
+// extern    u8               Best[2][18];                 // Best Attribute type to use
+extern    u8               Best[2][Y_HEIGHT_IN_TILES_LR_RNDUP];                 // Best Attribute type to use
+
 extern    u8               AttribTable[18][20];         // Attribute table for final render
 extern    u8               out[160][144];               // Output data
 extern    u8               raw[2][160][144][3];         // Original Picture Raw format: 2 x ((160x144) x RGB?)
