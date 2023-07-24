@@ -7,7 +7,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+
 #include "common.h"
+#include "path_ops.h"
 #include "logging.h"
 #include "image_load.h"
 
@@ -18,13 +20,14 @@
 
 void static display_help(void);
 int handle_args(int argc, char * argv[]);
-static bool matches_extension(char *, char *);
 static void init(void);
 void cleanup(void);
 static void set_drag_and_drop_mode_defaults(void);
 
 image_data src_image;
 char filename_in[MAX_STR_LEN] = {'\0'};
+char opt_base_output_filename[MAX_STR_LEN] = "";
+
 int  show_help_and_exit = false;
 
 
@@ -71,9 +74,14 @@ int main( int argc, char *argv[] )  {
                 // Load source image (from first argument)
                 if (image_load(&src_image, filename_in, IMG_TYPE_PNG)) {
 
-                    // TODO: strip extension off filename, etc
-                    // hicolor_process_image(&src_image, filename_in);
-                    hicolor_process_image(&src_image, "test");
+                    // If specified use custom base filename, otherwise strip extension from input
+                    if (opt_base_output_filename[0] != '\0')
+                        hicolor_process_image(&src_image, opt_base_output_filename);
+                    else {
+                        filename_remove_extension(filename_in);
+                        hicolor_process_image(&src_image, filename_in);
+                    }
+
                     ret = EXIT_SUCCESS; // Exit with success
                 }
             }
@@ -104,7 +112,8 @@ static void display_help(void) {
         "Convert an image to Game Boy Hi-Color format\n"
         "\n"
         "Options\n"
-        "-h   : Show this help\n"
+        "-h    : Show this help\n"
+        "-o:*  : Set base output filename\n"
         "-v*   : Set log level: \"-vV\" verbose, \"-vQ\" quiet, \"-vE\" only errors\n"
         "-cM:N : Set conversion method where N is one of below \n"
         "        0: Original (J.Frohwein)\n"
@@ -116,7 +125,7 @@ static void display_help(void) {
         "-sP   : Show screen conversion attribute pattern widths list (no processing)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
-        "Example 2: \"png2hicolorgb myimage.png -cM:3 -cL:2 -cR:2\"\n"  //  -o:outputfilename -n:somevarname
+        "Example 2: \"png2hicolorgb myimage.png -cM:3 -cL:2 -cR:2 -o:my_base_output_filename\"\n" // -n:somevarname
         "\n"
         "Based on win32 hicolour.exe. Historical info:\n"
         "   Original Concept : Icarus Productions\n"
@@ -180,6 +189,25 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-cR:") == argv[i]) {
             hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-cR:"), NULL, 10));
 
+        } else if (strstr(argv[i], "-o") == argv[i]) {
+            // Require colon and filename to be present
+             if (strlen(argv[i]) < strlen("-o:N")) {
+                log_standard("Error: -o specified but filename missing or invalid format. Ex: -o:my_base_output_filename\n");
+                show_help_and_exit = true;
+                return false; // Abort
+            }
+            snprintf(opt_base_output_filename, sizeof(opt_base_output_filename), "%s", argv[i] + strlen("-o:"));
+
+        // } else if (strstr(argv[i], "--varname=") == argv[i]) {
+        //     snprintf(opt_c_source_output_varname, sizeof(opt_c_source_output_varname), "%s", argv[i] + 10);
+
+        // } else if (strstr(argv[i], "--bank=") == argv[i]) {
+        //     opt_bank_num = atoi(argv[i] + strlen("--bank="));
+        //     if ((opt_bank_num < BANK_NUM_ROM_MIN) || (opt_bank_num > BANK_NUM_ROM_MAX)) {
+        //         printf("gbcompress: Warning: Bank Num %d outside of range %d - %d\n", opt_bank_num, BANK_NUM_ROM_MIN, BANK_NUM_ROM_MAX);
+        //         return false;
+        //     }
+
 
         } else if (argv[i][0] == '-') {
             log_error("Unknown argument: %s\n\n", argv[i]);
@@ -190,17 +218,4 @@ int handle_args(int argc, char * argv[]) {
     }
 
     return true;
-}
-
-
-// Case insensitive
-static bool matches_extension(char * filename, char * extension) {
-
-    if (strlen(filename) >= strlen(extension)) {
-        char * str_ext = filename + (strlen(filename) - strlen(extension));
-
-        return (strncasecmp(str_ext, extension, strlen(extension)) == 0);
-    }
-    else
-        return false;
 }
