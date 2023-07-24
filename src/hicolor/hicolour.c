@@ -158,7 +158,6 @@ void hicolor_init(void) {
 
 
 void hicolor_set_convert_left_pattern(uint8_t new_value) {
-    log_verbose("hicolor_set_convert_left_pattern\n");
     // IDC_CONVERTLEFT
     LConversion = new_value;
     log_verbose("HiColor: Left pattern set to %d\n", new_value);
@@ -166,7 +165,6 @@ void hicolor_set_convert_left_pattern(uint8_t new_value) {
 
 
 void hicolor_set_convert_right_pattern(uint8_t new_value) {
-    log_verbose("hicolor_set_convert_right_pattern\n");
     // IDC_CONVERTRIGHT
     RConversion = new_value;
     log_verbose("HiColor: Right pattern set to %d\n", new_value);
@@ -174,7 +172,6 @@ void hicolor_set_convert_right_pattern(uint8_t new_value) {
 
 
 void hicolor_set_type(uint8_t new_value) {
-    log_verbose("hicolor_set_type\n");
     // IDC_CONVERTTYPE
     ConvertType = new_value;
     log_verbose("HiColor: Convert type set to %d\n", new_value);

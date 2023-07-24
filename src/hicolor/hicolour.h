@@ -13,8 +13,9 @@
 
 // For displaying available conversion patterns to the user
 #define HELP_CONV_PATTERN_STR \
-    "Available conversion attribute pattern widths for -cL:N and -cR:N\n" \
+    "Available conversion palette/attribute pattern widths for -cL:N and -cR:N\n" \
     "\n" \
+    "- Default for Left and Right is 3\n"
     "- Fixed pattern widths are faster but less optimal than adaptive\n" \
     "- Adaptive pattern width speeds are 1: fastest, 2: medium, 3: slowest (slower = higher quality)\n" \
     "\n" \

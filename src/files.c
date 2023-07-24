@@ -54,7 +54,8 @@ bool file_write_from_buffer(char * filename, uint8_t * p_buf, uint32_t data_len)
             printf("Warning: File write size didn't match expected for %s\n", filename);
 
         fclose(file_out);
-    }
+    } else
+      printf("Warning: Unable to open file: %s\n", filename);
     return status;
 }
 

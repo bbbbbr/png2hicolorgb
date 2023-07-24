@@ -84,8 +84,8 @@ int main( int argc, char *argv[] )  {
     if (get_exit_error())
         ret = EXIT_FAILURE;
 
-    if (ret == EXIT_FAILURE)
-        log_error("Error: Unable to process image file %s\n", filename_in);
+    // if (ret == EXIT_FAILURE)
+    //     log_error("Error loading, converting or writing out the image: %s\n", filename_in);
 
     #ifdef DRAG_AND_DROP_MODE
         // Wait for input to keep the console window open after processing
@@ -105,21 +105,18 @@ static void display_help(void) {
         "\n"
         "Options\n"
         "-h   : Show this help\n"
-        // "      shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]\n"
-        // "-F   : Force Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)\n"
-        // "-m   : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
         "-v*   : Set log level: \"-vV\" verbose, \"-vQ\" quiet, \"-vE\" only errors\n"
         "-cM:N : Set conversion method where N is one of below \n"
-        "        0:Original (J.Frohwein)\n"
-        "        1:Median Cut - No Dither\n"
-        "        2:Median Cut - With Dither\n"
-        "        3:Wu Quantiser\n"
+        "        0: Original (J.Frohwein)\n"
+        "        1: Median Cut - No Dither (*Default*)\n"
+        "        2: Median Cut - With Dither\n"
+        "        3: Wu Quantiser\n"
         "-cL:N : Set Left  screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
         "-cR:N : Set Right screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
         "-sP   : Show screen conversion attribute pattern widths list (no processing)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
-        "Example 2: \"png2hicolorgb myimage.png -cA:3 0cL:// -o:outputfilename -n:somevarname\"\n"
+        "Example 2: \"png2hicolorgb myimage.png -cM:3 -cL:2 -cR:2\"\n"  //  -o:outputfilename -n:somevarname
         "\n"
         "Based on win32 hicolour.exe. Historical info:\n"
         "   Original Concept : Icarus Productions\n"
