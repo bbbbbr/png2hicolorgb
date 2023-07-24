@@ -13,7 +13,7 @@ int output_level = OUTPUT_LEVEL_DEFAULT;
     va_start (args, format); \
     vprintf (format, args); \
     va_end (args); \
-    fflush(stdout);
+    fflush(stdout);    // If logging a lot of output to a file turn off the excessive flushing
 
 
 void log_set_level(int new_output_level) {
