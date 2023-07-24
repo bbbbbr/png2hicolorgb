@@ -109,14 +109,14 @@ static void display_help(void) {
         // "-F   : Force Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)\n"
         // "-m   : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
         "-v*   : Set log level: \"-vV\" verbose, \"-vQ\" quiet, \"-vE\" only errors\n"
-        "-cA:N : Set conversion algorithm where N is one of below \n"
-        "        0:Original Method (J.Frohwein)\n"
+        "-cM:N : Set conversion method where N is one of below \n"
+        "        0:Original (J.Frohwein)\n"
         "        1:Median Cut - No Dither\n"
         "        2:Median Cut - With Dither\n"
         "        3:Wu Quantiser\n"
         "-cL:N : Set Left  screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
         "-cR:N : Set Right screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
-        "-sP   : Show screen conversion patterns list (no processing)\n"
+        "-sP   : Show screen conversion attribute pattern widths list (no processing)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png -cA:3 0cL:// -o:outputfilename -n:somevarname\"\n"
@@ -176,7 +176,7 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-vQ") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_QUIET);
 
-        } else if (strstr(argv[i], "-cA:") == argv[i]) {
+        } else if (strstr(argv[i], "-cM:") == argv[i]) {
             hicolor_set_type( strtol(argv[i] + strlen("-cA:"), NULL, 10));
         } else if (strstr(argv[i], "-cL:") == argv[i]) {
             hicolor_set_convert_left_pattern( strtol(argv[i] + strlen("-cL:"), NULL, 10));
