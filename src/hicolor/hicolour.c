@@ -148,7 +148,7 @@ void hicolor_init(void) {
     // Defaults
     LConversion = 3; // Default Conversion (Fixed 3-2-3-2) Left Screen
     RConversion = 3; // Default Conversion (Fixed 3-2-3-2) Righ Screen
-    ConvertType = 2; // Normal default is 2 ("Adaptive 3")
+    ConvertType = 1; // Normal default is 1 ("Median cut - no dither")
 
     // TODO: unused, delete
     // GWeight=100;
