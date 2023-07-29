@@ -21,6 +21,16 @@ typedef struct tagRGBQUAD {
 #define s16 int16_t
 #define s32 int32_t
 
+enum conversion_types {
+    CONV_TYPE_ORIG_JEFF = 0,
+    CONV_TYPE_MED_CUT_NO_DITHER = 1,
+    CONV_TYPE_MED_CUT_YES_DITHER = 2,
+    CONV_TYPE_WU = 3,
+
+    CONV_TYPE_MIN  = CONV_TYPE_ORIG_JEFF,
+    CONV_TYPE_MAX  = CONV_TYPE_WU
+};
+
 #define CONV_SIDE_LEFT  0
 #define CONV_SIDE_RIGHT 1
 

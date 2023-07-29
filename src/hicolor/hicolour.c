@@ -182,7 +182,7 @@ void hicolor_set_type(uint8_t new_value) {
 
 // Equivalent of former file loading
 static void hicolor_image_import(image_data * p_loaded_image) {
-    log_verbose("hicolor_image_import()\n");
+    log_debug("hicolor_image_import()\n");
 
 // if(CheckTGA()==0)        // Valid File
 // {
@@ -254,7 +254,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 // TODO: fix
 // TODO: Operates on RGB data in pic[] copied from RGB data in pic2
 static void hicolor_convert(void) {
-    log_verbose("hicolor_convert()\n");
+    log_debug("hicolor_convert()\n");
 
     for(int x=0; x<160; x++)
     {
@@ -304,7 +304,7 @@ static void hicolor_convert(void) {
 
 
 static void hicolor_save(const char * fname_base) {
-    log_verbose("hicolor_save()\n");
+    log_debug("hicolor_save()\n");
     ExportTileSet(fname_base);
     ExportPalettes(fname_base);
     ExportAttrMap(fname_base);
@@ -313,7 +313,7 @@ static void hicolor_save(const char * fname_base) {
 
 // Currently expects 160x144 x RGB888
 void hicolor_process_image(image_data * p_loaded_image, const char * fname_base) {
-    log_verbose("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
+    log_debug("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
 
     hicolor_image_import(p_loaded_image);
     hicolor_convert();
@@ -338,9 +338,9 @@ void ExportTileSet(const char * fname_base)
     u8       dx,dy;
     u8       c;
 
-    log_verbose("Writing Tile\n");
     strcpy(filename, fname_base);
     strcat(filename, ".til");
+    log_verbose("Writing Tile Patterns to: %s\n", filename);
 
     #define OUTBUF_SZ_TILES ((144 / 8) * (160 / 8) * 8 * 2) // TODO: make this controllable
     uint8_t output_buf[OUTBUF_SZ_TILES];
@@ -388,7 +388,7 @@ void ExportPalettes(const char * fname_base)
 
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
-    log_verbose("Writing Palette to \"%s\" (%s)\n", fname_base, filename);
+    log_verbose("Writing Palette to: %s\n", filename);
 
     #define OUTBUF_SZ_PALS (((Y_REGION_COUNT_BOTH_SIDES) * 4 * 4 * 2) + 1) // TODO: make this controllable
     uint8_t output_buf[OUTBUF_SZ_PALS];
@@ -418,7 +418,6 @@ void ExportPalettes(const char * fname_base)
     // TODO: What is this and why? :)
     *p_buf++ = 0x2d;
 
-    log_verbose("Writing Palette to \"%s\" (%s)\n", fname_base, filename);
     if (!file_write_from_buffer(filename, output_buf, OUTBUF_SZ_PALS))
         set_exit_error();
 
@@ -436,9 +435,9 @@ void ExportAttrMap(const char * fname_base)
     s32     i, x, y;
     uint8_t buf, pal;
 
-    log_verbose("Writing Tile ID Map\n");
     strcpy(filename, fname_base);
     strcat(filename, ".map");
+    log_verbose("Writing Tile Map to: %s\n", filename);
 
     #define OUTBUF_SZ_MAP (20 * 18) // TODO: make this controllable
     uint8_t output_buf_map[OUTBUF_SZ_MAP];
@@ -453,9 +452,9 @@ void ExportAttrMap(const char * fname_base)
         set_exit_error();
 
 
-    log_verbose("Writing Attribute Map\n");
     strcpy(filename, fname_base);
     strcat(filename, ".atr");
+    log_verbose("Writing Attribute Map to: %s\n", filename);
 
     // Reset pointer to start of file buffer
     p_buf_map = output_buf_map;
@@ -698,7 +697,7 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
 // TODO: rename to something that aligns with other convert functions
 void DoOtherConversion(int ConvertType)
 {
-    log_verbose("DoOtherConversion()\n");
+    log_debug("DoOtherConversion()\n");
     int        res;
     int        x,y,z,i;
     int        StartSplit=0;

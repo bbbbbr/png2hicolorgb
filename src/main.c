@@ -107,27 +107,28 @@ int main( int argc, char *argv[] )  {
 
 static void display_help(void) {
     log_standard(
+        "\n"
         "png2hicolorgb input_image.png [options]\n"
-        VERSION", by bbbbbr\n"
+        VERSION": bbbbbr. Based on Glen Cook Windows hicolor.exe 1.2\n"
         "Convert an image to Game Boy Hi-Color format\n"
         "\n"
         "Options\n"
-        "-h    : Show this help\n"
-        "-o:*  : Set base output filename\n"
-        "-v*   : Set log level: \"-vV\" verbose, \"-vQ\" quiet, \"-vE\" only errors\n"
-        "-cM:N : Set conversion method where N is one of below \n"
+        "-h   : Show this help\n"
+        "-o=* : Set base output filename (otherwise filename from input image)\n"
+        "-v*  : Set log level: \"-v\" verbose, \"-vQ\" quiet, \"-vE\" only errors, \"-vD\" debug\n"
+        "-T=N : Set conversion type where N is one of below \n"
         "        0: Original (J.Frohwein)\n"
         "        1: Median Cut - No Dither (*Default*)\n"
         "        2: Median Cut - With Dither\n"
         "        3: Wu Quantiser\n"
-        "-cL:N : Set Left  screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
-        "-cR:N : Set Right screen conversion pattern where N is decimal entry (-sP to show patterns)\n"
-        "-sP   : Show screen conversion attribute pattern widths list (no processing)\n"
+        "-L=N : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)\n"
+        "-R=N : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
+        "-p   : Show screen attribute pattern list (no processing)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
-        "Example 2: \"png2hicolorgb myimage.png -cM:3 -cL:2 -cR:2 -o:my_base_output_filename\"\n" // -n:somevarname
+        "Example 2: \"png2hicolorgb myimage.png -M=3 -L=2 -R=2 -o:my_base_output_filename\"\n" // -n:somevarname
         "\n"
-        "Based on win32 hicolour.exe. Historical info:\n"
+        "Historical credits and info:\n"
         "   Original Concept : Icarus Productions\n"
         "   Original Code : Jeff Frohwein\n"
         "   Full Screen Modification : Anon\n"
@@ -168,35 +169,43 @@ int handle_args(int argc, char * argv[]) {
             display_help();
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
-        } else if (strstr(argv[i], "-sP") == argv[i]) {
+        } else if (strstr(argv[i], "-p") == argv[i]) {
             log_standard(HELP_CONV_PATTERN_STR);
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
 
         } else if (strstr(argv[i], "-vD") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_DEBUG);
-        } else if (strstr(argv[i], "-vV") == argv[i]) {
-            log_set_level(OUTPUT_LEVEL_VERBOSE);
         } else if (strstr(argv[i], "-vE") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
         } else if (strstr(argv[i], "-vQ") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_QUIET);
+        } else if (strstr(argv[i], "-v") == argv[i]) {
+            log_set_level(OUTPUT_LEVEL_VERBOSE);
 
-        } else if (strstr(argv[i], "-cM:") == argv[i]) {
-            hicolor_set_type( strtol(argv[i] + strlen("-cA:"), NULL, 10));
-        } else if (strstr(argv[i], "-cL:") == argv[i]) {
-            hicolor_set_convert_left_pattern( strtol(argv[i] + strlen("-cL:"), NULL, 10));
-        } else if (strstr(argv[i], "-cR:") == argv[i]) {
-            hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-cR:"), NULL, 10));
-
-        } else if (strstr(argv[i], "-o") == argv[i]) {
-            // Require colon and filename to be present
-             if (strlen(argv[i]) < strlen("-o:N")) {
-                log_standard("Error: -o specified but filename missing or invalid format. Ex: -o:my_base_output_filename\n");
+        } else if (strstr(argv[i], "-T=") == argv[i]) {
+            uint8_t new_type = strtol(argv[i] + strlen("-T="), NULL, 10);
+            if ((new_type < CONV_TYPE_MIN) || (new_type > CONV_TYPE_MAX)) {
+                log_standard("Error: -T specified with invalid conversion setting: %d\n", new_type);
+                display_help();
                 show_help_and_exit = true;
                 return false; // Abort
             }
-            snprintf(opt_base_output_filename, sizeof(opt_base_output_filename), "%s", argv[i] + strlen("-o:"));
+            else
+                hicolor_set_type(new_type);
+        } else if (strstr(argv[i], "-L=") == argv[i]) {
+            hicolor_set_convert_left_pattern( strtol(argv[i] + strlen("-L="), NULL, 10));
+        } else if (strstr(argv[i], "-R=") == argv[i]) {
+            hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-R="), NULL, 10));
+
+        } else if (strstr(argv[i], "-o") == argv[i]) {
+            // Require colon and filename to be present
+             if (strlen(argv[i]) < strlen("-o=N")) {
+                log_standard("Error: -o specified but filename missing or invalid format. Ex: -o=my_base_output_filename\n");
+                show_help_and_exit = true;
+                return false; // Abort
+            }
+            snprintf(opt_base_output_filename, sizeof(opt_base_output_filename), "%s", argv[i] + strlen("-o="));
 
         // } else if (strstr(argv[i], "--varname=") == argv[i]) {
         //     snprintf(opt_c_source_output_varname, sizeof(opt_c_source_output_varname), "%s", argv[i] + 10);
