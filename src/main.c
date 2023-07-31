@@ -126,7 +126,6 @@ static void display_help(void) {
         "--csource : Export C source format with incbins for data files\n"
         "--bank=N  : Set bank number for C source output where N is decimal bank number 1-511\n"
         "--type=N  : Set conversion type where N is one of below \n"
-        "             0: Original (J.Frohwein)\n"
         "             1: Median Cut - No Dither (*Default*)\n"
         "             2: Median Cut - With Dither\n"
         "             3: Wu Quantiser\n"

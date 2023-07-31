@@ -5,9 +5,7 @@
 #include <stdint.h>
 
 #include "defines.h"
-// #include "resource.h"
 #include "hicolour.h"
-#include "jfrohwein.h"
 #include "median.h"
 #include "wu.h"
 
@@ -220,7 +218,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 
     // TODO: It's convoluted, but pBitssource & pBitsdest are used for:
     // - display as windows DIBs (formerly)
-    // - and for some calculations at the end of ConvertMethod1()
+    // - and for some calculations at the end of ConvertRegions()
     for (int y=0; y<144; y++) {
         for (int x=0; x<160; x++) {
             for (int z=0; z<3; z++) {
@@ -279,27 +277,7 @@ static void hicolor_convert(void) {
         }
     }
 
-    if (ConvertType==0)
-    {
-        ConvertMethod4();
-
-        for(int y=0; y<144; y++)
-        {
-            for(int x=0; x<160; x++)
-            {
-                uint8_t col=Picture256[y*160+x];
-                for(int z=0; z<3; z++)
-                {
-                    // TODO: hardwire to normal view raw[0]... and drop ViewType?
-                    *(pBitsdest+(143-y)*3*160+x*3+z)=raw[ViewType][x][y][2-z];
-                }
-            }
-        }
-    }
-    else
-    {
-        DoOtherConversion(ConvertType-1);
-    }
+    ConvertToHiColor(ConvertType-1);
 }
 
 
@@ -478,108 +456,6 @@ void ExportAttrMap(const char * fname_base)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: rename to something that aligns with other convert functions
-void ConvertMethod4(void)
-{
-
-    log_debug("ConvertMethod4()\n");
-    u8                StartSplit=0;
-    u8                NumSplit=1;
-    u16               Steps=1;
-    u8                res;
-
-
-    switch(LConversion)
-    {
-        case 0:
-
-            StartSplit=0;
-            NumSplit=6;
-            Steps=126;
-            break;
-
-        case 1:
-
-            StartSplit=0;
-            NumSplit=10;
-            Steps=198;
-            break;
-
-        case 2:
-
-            StartSplit=0;
-            NumSplit=80;
-            Steps=1458;
-            break;
-
-        default:
-
-            StartSplit=LConversion-3;
-            NumSplit=1;
-            Steps=36;
-            break;
-    }
-
-    switch(RConversion)
-    {
-        case 0:
-
-            Steps+=108;
-            break;
-
-        case 1:
-
-            Steps+=180;
-            break;
-
-        case 2:
-
-            Steps+=1440;
-            break;
-
-        default:
-
-            Steps+=18;
-            break;
-    }
-
-    res=DetermineBestLeft(StartSplit,NumSplit);
-    RemapGB(CONV_SIDE_LEFT,res,1);
-
-    switch(RConversion)
-    {
-        case 0:
-
-            StartSplit=0;
-            NumSplit=6;
-            break;
-
-        case 1:
-
-            StartSplit=0;
-            NumSplit=10;
-            break;
-
-        case 2:
-
-            StartSplit=0;
-            NumSplit=80;
-            break;
-
-        default:
-
-            StartSplit=RConversion-3;
-            NumSplit=1;
-            break;
-    }
-
-    RemapGB(CONV_SIDE_RIGHT,StartSplit,NumSplit);
-    RemapPCtoGBC();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -695,9 +571,9 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
 
 
 // TODO: rename to something that aligns with other convert functions
-void DoOtherConversion(int ConvertType)
+void ConvertToHiColor(int ConvertType)
 {
-    log_debug("DoOtherConversion()\n");
+    log_debug("ConvertToHiColor()\n");
     int        res;
     int        x,y,z,i;
     int        StartSplit=0;
@@ -765,8 +641,8 @@ void DoOtherConversion(int ConvertType)
     // Convert left side with one extra tile of height to fix
     // the glitching where the last scanline on left bottom region
     // lacks tile and palette data
-    res=ConvertMethod1(0,1,0,Y_HEIGHT_IN_TILES_LEFT,StartSplit,NumSplit,ConvertType);        // Step through all options
-    ConvertMethod1(0,1,0,Y_HEIGHT_IN_TILES_LEFT,res,1,ConvertType);
+    res=ConvertRegions(0,1,0,Y_HEIGHT_IN_TILES_LEFT,StartSplit,NumSplit,ConvertType);        // Step through all options
+    ConvertRegions(0,1,0,Y_HEIGHT_IN_TILES_LEFT,res,1,ConvertType);
 
     for(y=0;y<189;y++)
         Best[0][y]=res;
@@ -801,8 +677,8 @@ void DoOtherConversion(int ConvertType)
 
     for(y=0;y<18;y++)
     {
-        res=ConvertMethod1(1,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
-        ConvertMethod1(1,1,y,1,res,1,ConvertType);
+        res=ConvertRegions(1,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
+        ConvertRegions(1,1,y,1,res,1,ConvertType);
         Best[1][y]=res;
     }
 
@@ -853,10 +729,9 @@ void DoOtherConversion(int ConvertType)
 // StartY = 0 - 17 : Starting attribute block
 // Height = Number of attribute blocks to check / process
 
-// TODO: rename to something that aligns with other convert functions
-int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType)
+int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType)
 {
-    log_debug("ConvertMethod1()\n");
+    log_debug("ConvertRegions()\n");
     u32        Accum,width,x1,ts,tw,y2,x2,y_offset;
     s32        x,y;
     s32        i,j;

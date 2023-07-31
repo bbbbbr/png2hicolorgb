@@ -11,12 +11,13 @@ Example image Pixel art originally by RodrixAP under Creative Commons Attributio
 https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 
 
-# Improvements:
+# Changes:
 - Support for PNG image files
 - Support for multiple OS platforms: Linux, Windows, MacOS
 - Console based, meant for integration with build toolchains
 - Fixes last scanline tile and palette update missing for Left side of screen
   - (For conversion methods 1-3, a few glitches still remain for method 0)
+- Removed the Jeff Frohwein conversion type due to unclear source license status
 
 
 ```
@@ -29,7 +30,6 @@ Options
 -o=* : Set base output filename (otherwise filename from input image)
 -v*  : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
 -T=N : Set conversion type where N is one of below 
-        0: Original (J.Frohwein)
         1: Median Cut - No Dither (*Default*)
         2: Median Cut - With Dither
         3: Wu Quantiser

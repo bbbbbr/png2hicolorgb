@@ -68,11 +68,10 @@ void ExportTileSet(const char * fname_base);
 void ExportPalettes(const char * fname_base);
 void ExportAttrMap(const char * fname_base);
 
-void ConvertMethod4(void);
 RGBQUAD translate(uint8_t rgb[3]);
 unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height);
-void DoOtherConversion(int ConvertType);
-int ConvertMethod1(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType);
+void ConvertToHiColor(int ConvertType);
+int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType);
 
 
 #endif
