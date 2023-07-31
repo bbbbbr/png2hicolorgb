@@ -1,6 +1,13 @@
 # png2hicolorgb
-
 An updated version of Glenn Cook's Windows Game Boy Hi Colour conversion app. The starting code base was the 1.2 release.
+
+# HiColor 
+"Hi Color" on the Game Boy Color is a technique for displaying backgrounds with thousands of colors instead being limtied to 32 colors for the entire screen background. It achieves this by changing ~16 colors of the background palette per scanline. The main tradeoffs are that it uses much of the Game Boy's available cpu processing per frame and requires more ROM space. The tile patterns, map, attributes and per-scanline palettes are pre-calculated using the PC based conversion tool.
+
+
+![Hi Color example image on a Game Boy Color](/info/gbc_hicolor_test_pattern.jpg)
+![Hi Color test pattern on a Game Boy Color](/info/gbc_hicolor_example_image.jpg)
+
 
 # Pallete ISR
 The new palette update ISR is contributed by Toxa
@@ -26,19 +33,21 @@ version 1.4.0: bbbbbr. Based on Glen Cook Windows hicolor.exe 1.2
 Convert an image to Game Boy Hi-Color format
 
 Options
--h   : Show this help
--o=* : Set base output filename (otherwise filename from input image)
--v*  : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
--T=N : Set conversion type where N is one of below 
-        1: Median Cut - No Dither (*Default*)
-        2: Median Cut - With Dither
-        3: Wu Quantiser
--L=N : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)
--R=N : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
--p   : Show screen conversion attribute pattern list (no processing)
+-h        : Show this help
+-v*       : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
+-o=*      : Set base output filename (otherwise from input image)
+--csource : Export C source format with incbins for data files
+--bank=N  : Set bank number for C source output where N is decimal bank number 1-511
+--type=N  : Set conversion type where N is one of below 
+             1: Median Cut - No Dither (*Default*)
+             2: Median Cut - With Dither
+             3: Wu Quantiser
+-p        : Show screen attribute pattern options (no processing)
+-L=N      : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)
+-R=N      : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
 
 Example 1: "png2hicolorgb myimage.png"
-Example 2: "png2hicolorgb myimage.png -M=3 -L=2 -R=2 -o:my_base_output_filename"
+Example 2: "png2hicolorgb myimage.png --type=3 -L=2 -R=2 --csource -o=my_output_filename"
 
 Historical credits and info:
    Original Concept : Icarus Productions
