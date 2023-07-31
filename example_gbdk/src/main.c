@@ -18,13 +18,13 @@ inline void waitpad_up_lowcpu(void) {
 }
 
 
-_Noreturn void main(void) {
+void main(void) {
 
     bool toggle = true;
 
     SHOW_BKG;
 
-    // Reqiore Game Boy COlor
+    // Reqiore Game Boy Color
     if (_cpu == CGB_TYPE) {
         // CGB running in 2x mode is required
         cpu_fast();
