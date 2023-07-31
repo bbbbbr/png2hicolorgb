@@ -6,14 +6,7 @@
 
 #include <gbc_hicolor.h>
 
-
-#define HICOL_TILE_SZ             16u
-#define HICOL_TILE_COUNT          360u
-#define HICOL_NUM_TILES_BANK_0    256u
-#define HICOL_NUM_TILES_BANK_1    (HICOL_TILE_COUNT - HICOL_NUM_TILES_BANK_0)
-#define HICOL_TILES_BANK_1_OFFSET (HICOL_NUM_TILES_BANK_0 * HICOL_TILE_SZ)
-#define HICOL_TILES_START         128u
-
+#define MIN(A,B) ((A)<(B)?(A):(B))
 
 static uint16_t SP_SAVE;
 static uint8_t * p_hicolor_palettes;
@@ -113,17 +106,18 @@ void hicolor_start(hicolor_data * p_hicolor) NONBANKED {
     // Copy address of palette into local var used by HiColor ISR
     p_hicolor_palettes = p_hicolor->p_palette;
 
-    // TODO: configurable size using p_hicolor-> tile_count , p_hicolor->height_in_tiles
-
-    // Load first 256 tiles and set BG Map
+    // Load the first 256 tiles or less and set BG Map
     VBK_REG = VBK_TILES;
-    set_bkg_data(HICOL_TILES_START, HICOL_NUM_TILES_BANK_0, p_hicolor->p_tiles);
-    set_bkg_tiles(0u, 0u, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, p_hicolor->p_map);
+
+    // TODO: change vmemcpy() to set_bkg_tiles(), after changing converter to emit data in proper order, use vmemcpy() for now
+
+    vmemcpy(_VRAM8800, p_hicolor->p_tiles, MIN(p_hicolor->tile_count, 256) * 16);    
+    set_bkg_tiles(0u, 0u, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_map);
 
     // Load remaining 256 tiles and set Attribute Map into alternate bank
     VBK_REG = VBK_ATTRIBUTES;
-    set_bkg_data(HICOL_TILES_START, HICOL_NUM_TILES_BANK_1, p_hicolor->p_tiles + (HICOL_TILES_BANK_1_OFFSET));
-    set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, p_hicolor->p_attribute_map);
+    if (p_hicolor->tile_count > 256) vmemcpy(_VRAM8800, p_hicolor->p_tiles + (256 * 16), (p_hicolor->tile_count - 256) * 16);    
+    set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_attribute_map);
     VBK_REG = VBK_TILES;
 
     // Set up and install the HiColor ISR
@@ -141,9 +135,9 @@ void hicolor_start(hicolor_data * p_hicolor) NONBANKED {
 // De-installs the HiColor ISR handler
 void hicolor_stop(void) NONBANKED {
     // Turn off and de-install the HiColor ISR
+    set_interrupts(IE_REG & ~LCD_IFLAG);
     CRITICAL {
         remove_LCD(hicolor_palette_isr);
     }
-    set_interrupts(IE_REG & ~LCD_IFLAG);
 }
 
