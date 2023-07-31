@@ -79,29 +79,30 @@ cleanobj:
 clean:
 	$(DEL) $(COBJ) $(BIN_WIN) $(BIN) $(DEPS)
 
-macoszip: macos
-	mkdir -p $(PACKDIR)
+cleanexamples:
+	$(DEL) example_gbdk/bin/* example_gbdk/obj/*
+	$(DEL) example_rgbds/bin/* example_rgbds/obj/*
+
+macoszip: macos cleanexamples
 	strip $(BIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-macos.zip $(BIN)
+	zip -r $(BIN)-macos.zip example_gbdk example_rgbds
 	mv $(BIN)-macos.zip $(PACKDIR)
-#	cp $(BIN) $(PACKDIR)
 
-linuxzip: linux
-	mkdir -p $(PACKDIR)
+linuxzip: linux cleanexamples
 	strip $(BIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-linux.zip $(BIN)
+	zip -r $(BIN)-linux.zip example_gbdk example_rgbds
 	mv $(BIN)-linux.zip $(PACKDIR)
-#	cp $(BIN) $(PACKDIR)
 
-wincrosszip: wincross
-	mkdir -p $(PACKDIR)
+wincrosszip: wincross cleanexamples
 	strip $(BIN_WIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-windows.zip $(BIN_WIN)
+	zip -r $(BIN)-windows.zip example_gbdk example_rgbds
 	mv $(BIN)-windows.zip $(PACKDIR)
-#	cp $(BIN_WIN) $(PACKDIR)
 
 package:
 	${MAKE} clean
