@@ -109,7 +109,8 @@ void hicolor_start(hicolor_data * p_hicolor) NONBANKED {
     // Load the first 256 tiles or less and set BG Map
     VBK_REG = VBK_TILES;
 
-    // TODO: change vmemcpy() to set_bkg_tiles(), after changing converter to emit data in proper order, use vmemcpy() for now
+    // TODO: change vmemcpy() to set_bkg_data(), after changing converter to emit data 
+    // in the proper order, that will allow correct loading with LCDC_REG |= LCDCF_BG8000
 
     vmemcpy(_VRAM8800, p_hicolor->p_tiles, MIN(p_hicolor->tile_count, 256) * 16);    
     set_bkg_tiles(0u, 0u, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_map);
