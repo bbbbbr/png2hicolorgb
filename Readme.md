@@ -2,6 +2,10 @@
 
 An updated version of Glenn Cook's Windows Game Boy Hi Colour conversion app. The starting code base was the 1.2 release.
 
+# Pallete ISR
+The new palette update ISR is contributed by Toxa
+https://github.com/untoxa
+
 # Example image
 Example image Pixel art originally by RodrixAP under Creative Commons Attribution 2.0 Generic (CC BY 2.0)
 https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
