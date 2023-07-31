@@ -9,20 +9,12 @@
 #include "test_pattern.h"
 
 
-void waitpad_lowcpu(void) {
-    uint8_t buttons = joypad();
-    while(!buttons) {
-        vsync();
-        buttons = joypad();
-    }
+inline void waitpad_lowcpu(void) {
+    while(!joypad()) vsync();
 }
 
-void waitpad_up_lowcpu(void) {
-    uint8_t buttons = joypad();
-    while(buttons) {
-        vsync();
-        buttons = joypad();
-    }
+inline void waitpad_up_lowcpu(void) {
+    while(joypad()) vsync();
 }
 
 
@@ -31,7 +23,6 @@ _Noreturn void main(void) {
     bool toggle = true;
 
     SHOW_BKG;
-    SHOW_SPRITES;
 
     // Reqiore Game Boy COlor
     if (_cpu == CGB_TYPE) {
@@ -39,7 +30,7 @@ _Noreturn void main(void) {
         cpu_fast();
 
 
-        while(TRUE) {
+        while(true) {
             // Load and display a HiColor image
             vsync();
             DISPLAY_OFF;
