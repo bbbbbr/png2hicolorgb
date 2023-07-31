@@ -39,19 +39,18 @@ _Noreturn void main(void) {
         cpu_fast();
 
 
-        while(1) {
+        while(TRUE) {
             // Load and display a HiColor image
+            vsync();
+            DISPLAY_OFF;
             if (toggle)
                 hicolor_start(&HICOLOR_VAR(example_image));
             else
                 hicolor_start(&HICOLOR_VAR(test_pattern));
-
+            DISPLAY_ON;
 
             waitpad_lowcpu();
             waitpad_up_lowcpu();
-
-            // Stop showing the image
-            hicolor_stop();
 
             // Change which image to show
             toggle = !toggle;
