@@ -6,7 +6,9 @@
 # If you move this project you can change the directory
 # to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 # GBDK_HOME = ../../../
+ifndef GBDK_HOME
 GBDK_HOME = ~/git/gbdev/gbdk2020/gbdk-2020-git/build/gbdk/
+endif
 
 LCC = $(GBDK_HOME)bin/lcc
 
