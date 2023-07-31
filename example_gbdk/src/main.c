@@ -4,7 +4,7 @@
 
 #include <gbc_hicolor.h>
 
-// GBC HiColor images, header file names align with png file names
+// GBC HiColor images; header file names align with png file names
 #include "example_image.h"
 #include "test_pattern.h"
 
@@ -19,19 +19,19 @@ inline void waitpad_up_lowcpu(void) {
 
 
 void main(void) {
-
+    // image toggling variable, by default we show example_image
     bool toggle = true;
 
     SHOW_BKG;
 
-    // Reqiore Game Boy Color
+    // Require Game Boy Color
     if (_cpu == CGB_TYPE) {
-        // CGB running in 2x mode is required
+        // CGB running in the double speed mode is required
         cpu_fast();
 
 
         while(true) {
-            // Load and display a HiColor image
+            // Load and display the HiColor image
             vsync();
             DISPLAY_OFF;
             if (toggle)
