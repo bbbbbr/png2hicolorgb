@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#include <common.h>
+
 // Originates on Windows format is BGRX24
 // TODO: is this right & ok for what code expects?
 typedef struct tagRGBQUAD {
@@ -40,7 +42,6 @@ enum conversion_types {
 #define IMAGE_Y_MIN          0
 #define IMAGE_Y_MAX          143
 #define IMAGE_HEIGHT         ((IMAGE_Y_MAX - IMAGE_Y_MIN) + 1)// 144
-#define TILE_HEIGHT_PX       8
 #define PAL_REGION_HEIGHT_PX 2
 
 // Screen palette region updates are 80 pixels wide and 2 pixels tall

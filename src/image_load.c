@@ -37,10 +37,15 @@ static bool image_validate(image_data * p_decoded_image) {
         return false;
     }
 
-    // if ((p_decoded_image->height % 4) != 0u) {
-    //     log_verbose("Error: Image height %d is not a multiple of 4 (it must be)\n", p_decoded_image->height);
-    //     return false;
-    // }
+    if ((p_decoded_image->height % 8) != 0u) {
+        log_verbose("Error: Image height must be a multiple of 8, %d is not\n", p_decoded_image->height);
+        return false;
+    }
+
+    if ((p_decoded_image->width % 8) != 0u) {
+        log_verbose("Error: Image width must be a multiple of 8, %d is not\n", p_decoded_image->width);
+        return false;
+    }
 
     return true;
 }

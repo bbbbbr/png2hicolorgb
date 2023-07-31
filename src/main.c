@@ -12,21 +12,25 @@
 #include "path_ops.h"
 #include "logging.h"
 #include "image_load.h"
+#include "c_source.h"
 
 #include <hicolour.h>
 
 
 #define VERSION "version 1.4.0"
 
-void static display_help(void);
-int handle_args(int argc, char * argv[]);
 static void init(void);
-void cleanup(void);
+static void cleanup(void);
+static void display_help(void);
+static int  handle_args(int argc, char * argv[]);
 static void set_drag_and_drop_mode_defaults(void);
 
 image_data src_image;
 char filename_in[MAX_STR_LEN] = {'\0'};
-char opt_base_output_filename[MAX_STR_LEN] = "";
+char opt_filename_out[MAX_STR_LEN] = "";
+// bool opt_strip_output_filename_ext = true;
+bool opt_c_file_output = false;
+int  opt_bank_num = BANK_NUM_UNSET;
 
 int  show_help_and_exit = false;
 
@@ -39,7 +43,7 @@ static void init(void) {
 
 
 // Registered as an atexit handler
-void cleanup(void) {
+static void cleanup(void) {
     // Handle any cleanup on exit
     // Free the image data
     if (src_image.p_img_data != NULL)
@@ -74,13 +78,15 @@ int main( int argc, char *argv[] )  {
                 // Load source image (from first argument)
                 if (image_load(&src_image, filename_in, IMG_TYPE_PNG)) {
 
-                    // If specified use custom base filename, otherwise strip extension from input
-                    if (opt_base_output_filename[0] != '\0')
-                        hicolor_process_image(&src_image, opt_base_output_filename);
-                    else {
-                        filename_remove_extension(filename_in);
-                        hicolor_process_image(&src_image, filename_in);
-                    }
+                    // If output filename is not specified, use source filename
+                    if (opt_filename_out[0] == '\0')
+                        strcpy(opt_filename_out, filename_in);
+                    filename_remove_extension(opt_filename_out);
+
+                    hicolor_process_image(&src_image, opt_filename_out);
+                    // TODO: ? move this into process image? or move file output out of it?
+                    if (opt_c_file_output)
+                        file_c_output_write(opt_filename_out, opt_bank_num, &src_image);
 
                     ret = EXIT_SUCCESS; // Exit with success
                 }
@@ -113,20 +119,23 @@ static void display_help(void) {
         "Convert an image to Game Boy Hi-Color format\n"
         "\n"
         "Options\n"
-        "-h   : Show this help\n"
-        "-o=* : Set base output filename (otherwise filename from input image)\n"
-        "-v*  : Set log level: \"-v\" verbose, \"-vQ\" quiet, \"-vE\" only errors, \"-vD\" debug\n"
-        "-T=N : Set conversion type where N is one of below \n"
-        "        0: Original (J.Frohwein)\n"
-        "        1: Median Cut - No Dither (*Default*)\n"
-        "        2: Median Cut - With Dither\n"
-        "        3: Wu Quantiser\n"
-        "-L=N : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)\n"
-        "-R=N : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
-        "-p   : Show screen attribute pattern list (no processing)\n"
+        "-h        : Show this help\n"
+        "-v*       : Set log level: \"-v\" verbose, \"-vQ\" quiet, \"-vE\" only errors, \"-vD\" debug\n"
+        "-o=*      : Set base output filename (otherwise from input image)\n"
+        // "--keepext   : Do not strip extension from output filename\n"
+        "--csource : Export C source format with incbins for data files\n"
+        "--bank=N  : Set bank number for C source output where N is decimal bank number 1-511\n"
+        "--type=N  : Set conversion type where N is one of below \n"
+        "             0: Original (J.Frohwein)\n"
+        "             1: Median Cut - No Dither (*Default*)\n"
+        "             2: Median Cut - With Dither\n"
+        "             3: Wu Quantiser\n"
+        "-p        : Show screen attribute pattern options (no processing)\n"
+        "-L=N      : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)\n"
+        "-R=N      : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
-        "Example 2: \"png2hicolorgb myimage.png -M=3 -L=2 -R=2 -o:my_base_output_filename\"\n" // -n:somevarname
+        "Example 2: \"png2hicolorgb myimage.png --type=3 -L=2 -R=2 --csource -o=my_output_filename\"\n"
         "\n"
         "Historical credits and info:\n"
         "   Original Concept : Icarus Productions\n"
@@ -143,13 +152,13 @@ static void display_help(void) {
 
 
 // Default options for Windows Drag and Drop recipient mode
-void set_drag_and_drop_mode_defaults(void) {
+static void set_drag_and_drop_mode_defaults(void) {
 
     // Set some options here
 }
 
 
-int handle_args(int argc, char * argv[]) {
+static int handle_args(int argc, char * argv[]) {
 
     int i;
 
@@ -165,7 +174,7 @@ int handle_args(int argc, char * argv[]) {
     // Start at first optional argument, argc is zero based
     for (i = 1; i <= (argc -1); i++ ) {
 
-        if (strstr(argv[i], "-h") == argv[i]) {
+        if ((strstr(argv[i], "-h") == argv[i]) || (strstr(argv[i], "-?") == argv[i])) {
             display_help();
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
@@ -183,10 +192,10 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-v") == argv[i]) {
             log_set_level(OUTPUT_LEVEL_VERBOSE);
 
-        } else if (strstr(argv[i], "-T=") == argv[i]) {
-            uint8_t new_type = strtol(argv[i] + strlen("-T="), NULL, 10);
+        } else if (strstr(argv[i], "--type=") == argv[i]) {
+            uint8_t new_type = strtol(argv[i] + strlen("--type="), NULL, 10);
             if ((new_type < CONV_TYPE_MIN) || (new_type > CONV_TYPE_MAX)) {
-                log_standard("Error: -T specified with invalid conversion setting: %d\n", new_type);
+                log_standard("Error: --type specified with invalid conversion setting: %d\n", new_type);
                 display_help();
                 show_help_and_exit = true;
                 return false; // Abort
@@ -198,25 +207,26 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-R=") == argv[i]) {
             hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-R="), NULL, 10));
 
-        } else if (strstr(argv[i], "-o") == argv[i]) {
+        } else if (strstr(argv[i], "-o=") == argv[i]) {
             // Require colon and filename to be present
              if (strlen(argv[i]) < strlen("-o=N")) {
                 log_standard("Error: -o specified but filename missing or invalid format. Ex: -o=my_base_output_filename\n");
                 show_help_and_exit = true;
                 return false; // Abort
             }
-            snprintf(opt_base_output_filename, sizeof(opt_base_output_filename), "%s", argv[i] + strlen("-o="));
-
-        // } else if (strstr(argv[i], "--varname=") == argv[i]) {
-        //     snprintf(opt_c_source_output_varname, sizeof(opt_c_source_output_varname), "%s", argv[i] + 10);
-
-        // } else if (strstr(argv[i], "--bank=") == argv[i]) {
-        //     opt_bank_num = atoi(argv[i] + strlen("--bank="));
-        //     if ((opt_bank_num < BANK_NUM_ROM_MIN) || (opt_bank_num > BANK_NUM_ROM_MAX)) {
-        //         printf("gbcompress: Warning: Bank Num %d outside of range %d - %d\n", opt_bank_num, BANK_NUM_ROM_MIN, BANK_NUM_ROM_MAX);
-        //         return false;
-        //     }
-
+            snprintf(opt_filename_out, sizeof(opt_filename_out), "%s", argv[i] + strlen("-o="));
+        // } else if (strstr(argv[i], "--keepext") == argv[i]) {
+        //     opt_strip_output_filename_ext = false;
+        } else if (strstr(argv[i], "--csource") == argv[i]) {
+            opt_c_file_output = true;
+        } else if (strstr(argv[i], "--bank=") == argv[i]) {
+            opt_bank_num = strtol(argv[i] + strlen("--bank="), NULL, 10);
+            if ((opt_bank_num < BANK_NUM_MIN) || (opt_bank_num > BANK_NUM_MAX)) {
+                log_standard("Error: Invalid bank number specified with --bank=%d\n", opt_bank_num);
+                display_help();
+                show_help_and_exit = true;
+                return false; // Abort
+            }
 
         } else if (argv[i][0] == '-') {
             log_error("Unknown argument: %s\n\n", argv[i]);
@@ -228,3 +238,4 @@ int handle_args(int argc, char * argv[]) {
 
     return true;
 }
+
