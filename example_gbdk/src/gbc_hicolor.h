@@ -14,8 +14,14 @@ typedef struct hicolor_data {
         uint8_t * p_palette;
 } hicolor_data;
 
+// Loads Tile Patterns, Map and Map Attributes for the HiColor image,
+// then installs the HiColor ISR handler which updates palettes per scanline.
 void hicolor_start(hicolor_data * p_hicolor) NONBANKED;
-void hicolor_stop(void) NONBANKED;
+
+// De-installs the HiColor ISR handler
+inline void hicolor_stop(void) {
+    hicolor_start(NULL);
+}
 
 
 #endif
