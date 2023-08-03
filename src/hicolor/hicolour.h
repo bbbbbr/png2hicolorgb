@@ -54,10 +54,6 @@ void hicolor_process_image(image_data * p_decoded_image, const char * fname);
 
 /////////////////////////////////////////////////////////////////////////////
 
-void ExportTileSet(const char * fname_base);
-void ExportPalettes(const char * fname_base);
-void ExportAttrMap(const char * fname_base);
-
 RGBQUAD translate(uint8_t rgb[3]);
 unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height);
 void ConvertToHiColor(int ConvertType);

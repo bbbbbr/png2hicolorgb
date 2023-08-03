@@ -150,6 +150,12 @@ int y_height_in_tiles;
 int y_height_in_tiles_lr_rndup;
 
 
+static void ExportPalettes(const char * fname_base);
+static void ExportTileSet(const char * fname_base);
+static void ExportMap(const char * fname_base);
+static void ExportMapAttributes(const char * fname_base);
+
+
 void hicolor_init(void) {
     // Defaults
     LConversion = 3; // Default Conversion (Fixed 3-2-3-2) Left Screen
@@ -275,7 +281,8 @@ static void hicolor_save(const char * fname_base) {
     log_debug("hicolor_save()\n");
     ExportTileSet(fname_base);
     ExportPalettes(fname_base);
-    ExportAttrMap(fname_base);
+    ExportMap(fname_base);
+    ExportMapAttributes(fname_base);
 }
 
 
@@ -296,7 +303,7 @@ void hicolor_process_image(image_data * p_loaded_image, const char * fname_base)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void ExportTileSet(const char * fname_base)
+static void ExportTileSet(const char * fname_base)
 {
     char filename[MAX_PATH*2];
     uint32_t    byteWritten;
@@ -345,7 +352,7 @@ void ExportTileSet(const char * fname_base)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void ExportPalettes(const char * fname_base)
+static void ExportPalettes(const char * fname_base)
 {
     char filename[MAX_PATH * 2];
     uint32_t    byteWritten;
@@ -394,13 +401,11 @@ void ExportPalettes(const char * fname_base)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// TODO: split into two functions so it's easier to read
-void ExportAttrMap(const char * fname_base)
+static void ExportMap(const char * fname_base)
 {
-    char    filename[MAX_PATH*2];
-    uint32_t   byteWritten;
-    s32     i, x, y;
-    uint8_t buf, pal;
+    char      filename[MAX_PATH*2];
+    uint32_t  byteWritten;
+    s32       i;
 
     strcpy(filename, fname_base);
     strcat(filename, ".map");
@@ -408,8 +413,6 @@ void ExportAttrMap(const char * fname_base)
 
     int outbuf_sz_map = (20 * y_height_in_tiles);
     uint8_t output_buf_map[outbuf_sz_map];
-
-
     uint8_t * p_buf_map = output_buf_map;
 
     for (i = 0; i < (20 * y_height_in_tiles); i++)
@@ -421,14 +424,24 @@ void ExportAttrMap(const char * fname_base)
 
     if (!file_write_from_buffer(filename, output_buf_map, outbuf_sz_map))
         set_exit_error();
+}
 
+
+static void ExportMapAttributes(const char * fname_base)
+{
+    char    filename[MAX_PATH*2];
+    uint32_t   byteWritten;
+    s32     i, x, y;
+    uint8_t buf, pal;
 
     strcpy(filename, fname_base);
     strcat(filename, ".atr");
     log_verbose("Writing Attribute Map to: %s\n", filename);
 
-    // Reset pointer to start of file buffer
-    p_buf_map = output_buf_map;
+    int outbuf_sz_map = (20 * y_height_in_tiles);
+    uint8_t output_buf_map[outbuf_sz_map];
+    uint8_t * p_buf_map = output_buf_map;
+
     i = 0;
 
     for (y = 0; y < y_height_in_tiles; y++)
