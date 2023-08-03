@@ -11,6 +11,7 @@
 static uint16_t SP_SAVE;
 static uint8_t STAT_SAVE;
 static uint8_t * p_hicolor_palettes;
+static uint8_t p_hicolor_height;
 
 
 // ISR function which updates 4 CGB palettes per scanline
@@ -55,7 +56,7 @@ __asm
         jr z, 0$                    ; wait for mode 3
 
         ldh a, (_STAT_REG)
-        ld (_STAT_SAVE), a 
+        ld (_STAT_SAVE), a
 
         ld a, #STATF_MODE00
         ldh (_STAT_REG), a
@@ -81,8 +82,10 @@ __asm
             ld (hl), d
         .endm
 
+        ld a, (_p_hicolor_height)
+        ld c, a
         ldh a, (_LY_REG)
-        cp #143
+        cp c
         jr c, 1$                    ; load the next 4 palettes
 
         ld a, (_STAT_SAVE)
@@ -114,17 +117,19 @@ void hicolor_start(hicolor_data * p_hicolor) NONBANKED {
 
     // Copy address of palette into local var used by HiColor ISR
     p_hicolor_palettes = p_hicolor->p_palette;
+    // TODO: if less than screen height, then converter must emit tail palettes and the cutting scanline must be moved accordingly
+    p_hicolor_height = (p_hicolor->height_in_tiles > DEVICE_SCREEN_HEIGHT) ? (DEVICE_SCREEN_PX_HEIGHT - 1) : ((p_hicolor->height_in_tiles << 3) - 1);
 
-    // TODO: change vmemcpy() to set_bkg_data(), after changing converter to emit data 
+    // TODO: change vmemcpy() to set_bkg_data(), after changing converter to emit data
     // in the proper order, that will allow correct loading with LCDC_REG |= LCDCF_BG8000
 
     // Load the first 256 tiles or less and set BG Map
     VBK_REG = VBK_TILES;
-    vmemcpy(_VRAM8800, p_hicolor->p_tiles, MIN(p_hicolor->tile_count, 256) * 16);    
+    vmemcpy(_VRAM8800, p_hicolor->p_tiles, MIN(p_hicolor->tile_count, 256) * 16);
     set_bkg_tiles(0u, 0u, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_map);
     // Load remaining 256 tiles and set Attribute Map into alternate bank
     VBK_REG = VBK_ATTRIBUTES;
-    if (p_hicolor->tile_count > 256) vmemcpy(_VRAM8800, p_hicolor->p_tiles + (256 * 16), (p_hicolor->tile_count - 256) * 16);    
+    if (p_hicolor->tile_count > 256) vmemcpy(_VRAM8800, p_hicolor->p_tiles + (256 * 16), (p_hicolor->tile_count - 256) * 16);
     set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_attribute_map);
     VBK_REG = VBK_TILES;
 
