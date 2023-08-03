@@ -82,42 +82,37 @@ typedef struct
     u16       YSize;
     u8        BitDepth;
     u8        c1;
-    u8        data[160*144][3];
+    u8        data[160*BUF_HEIGHT][3];
 } IMG_TYPE;
 
 
-// u8            QR[144][160][3];
+// u8            QR[BUF_HEIGHT][160][3];
 u8            TileOffset[4];                 // Offset into screen for attribute start
 u8            TileWidth[4];                  // No of character attributes width
-u8            Pal[8][Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
-u8            IdealPal[8][Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
-u8            pic[160][144][3];              // Original Picture
-u8            pic2[160][144][3];             // Output picture
-u8            out[160][144];                 // Output data
+u8            Pal[8][BUF_Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
+u8            IdealPal[8][BUF_Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
+u8            pic[160][BUF_HEIGHT][3];              // Original Picture
+u8            pic2[160][BUF_HEIGHT][3];             // Output picture
+u8            out[160][BUF_HEIGHT];                 // Output data
 
-u8            raw[2][160][144][3];           // Original Picture Raw format.
+u8            raw[2][160][BUF_HEIGHT][3];           // Original Picture Raw format.
                                              // sourced from [0] = Normal , [1] = GB Color selected by ViewType
 
 // TODO: delete?
 s32           ViewType=0;                    // Type of view to show: 0 = Normal , 1 = GB Color
 
-u8            Best[2][Y_HEIGHT_IN_TILES_LR_RNDUP];                   // Best Attribute type to use
-// TODO: delete
-// s32           GWeight;                  // Colour weighting Green
-// s32           RWeight;                  // Colour weighting Red
-// s32           BWeight;                  // Colour weighting Blue
-// u8            GotFile=0;                     // Is there a file loaded
+u8            Best[2][BUF_HEIGHT_IN_TILES_RNDUP];  // Best Attribute type to use
 u8            LConversion;                   // Conversion type for left hand side of the screen
 u8            RConversion;                   // Conversion type for right hand side of the screen
 // HWND          Ghdwnd;                          // Global window handle
-u8            AttribTable[18][20];           // Attribute table for final render
+u8            AttribTable[BUF_HEIGHT_IN_TILES][20];           // Attribute table for final render
 // u8            OldLConv=0;                    // Conversion type
 // u8            OldRConv=0;
 uint8_t *     pBuffer;
 // u8            Message[2000];
 s32           ConvertType; //=2;
 
-u8            Data[160*144*3];  // Gets used for quantizing regions. Maybe other things too?
+u8            Data[160*BUF_HEIGHT*3];  // Gets used for quantizing regions. Maybe other things too?
 
 u32           TempD;
 s32           BestLine=0;  // TODO: convert to local var
@@ -128,11 +123,11 @@ u32           BestQuantLine;
 
 // Shim buffers for the former windows rendered images that were also used for some calculationss
 // bmihsource.biWidth          = 160;
-// bmihsource.biHeight         = 144;
+// bmihsource.biHeight         = BUF_HEIGHT;
 // bmihsource.biPlanes         = 1;
 // bmihsource.biBitCount       = 24;
-static      uint8_t Bitsdest[160 * 144 * 3]; // TODO: RGBA 4 bytes per pixel?
-static      uint8_t Bitssource[160 * 144 * 3];
+static      uint8_t Bitsdest[160 * BUF_HEIGHT * 3]; // TODO: RGBA 4 bytes per pixel?
+static      uint8_t Bitssource[160 * BUF_HEIGHT * 3];
 //
 static      uint8_t *pBitsdest = Bitsdest;
             uint8_t *pBitssource = Bitssource;
@@ -141,18 +136,54 @@ static      uint8_t *pBitsdest = Bitsdest;
 #define MAX_CONVERSION_TYPES    83
 #define MAX_QUANTISER_TYPES     4
 
+int image_y_min;
+int image_y_max;
+int image_height;
+int y_region_count_left;
+int y_region_count_right;
+int y_region_count_lr_rndup;
+int y_region_count_both_sides;
+int y_height_in_tiles_left;
+int y_height_in_tiles_right;
+int y_height_in_tiles;
+int y_height_in_tiles_lr_rndup;
+
 
 void hicolor_init(void) {
     // Defaults
     LConversion = 3; // Default Conversion (Fixed 3-2-3-2) Left Screen
     RConversion = 3; // Default Conversion (Fixed 3-2-3-2) Righ Screen
     ConvertType = 1; // Normal default is 1 ("Median cut - no dither")
-
-    // TODO: unused, delete
-    // GWeight=100;
-    // RWeight=100;
-    // BWeight=100;
 }
+
+static void hicolor_vars_prep(image_data * p_loaded_image) {
+    log_debug("hicolor_vars_prep()\n");
+
+    image_height                = p_loaded_image->height;
+    image_y_min                 = 0;
+    image_y_max                 = p_loaded_image->height - 1;
+
+    // // Screen palette region updates are 80 pixels wide and 2 pixels tall
+    // // since palette 0-3 allocated to left side, 4-7 allocated to right side
+    // // and only 4 palettes are updated per scanline, so Left and Right alternate in gettig udpates
+    // // 73(L) & 72(R) for standard GB screen
+
+    // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
+    y_region_count_left         = ((image_height / PAL_REGION_HEIGHT_PX) + 1);
+    y_region_count_right        =  (image_height / PAL_REGION_HEIGHT_PX);
+    // Use larger size[side] for rounded up amount
+    y_region_count_lr_rndup     =  (y_region_count_left);
+    y_region_count_both_sides   =  (y_region_count_left + y_region_count_right);
+
+    // 19(L) & 18(R) for standard GB Full screen height
+    // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
+    y_height_in_tiles_left      = ((image_height / TILE_HEIGHT_PX) + 1);
+    y_height_in_tiles_right     =  (image_height / TILE_HEIGHT_PX);
+    y_height_in_tiles           =  (image_height / TILE_HEIGHT_PX);
+    // Use larger size[side] for rounded up amount
+    y_height_in_tiles_lr_rndup  =  (y_height_in_tiles_left);
+}
+
 
 
 void hicolor_set_convert_left_pattern(uint8_t new_value) {
@@ -182,31 +213,14 @@ void hicolor_set_type(uint8_t new_value) {
 static void hicolor_image_import(image_data * p_loaded_image) {
     log_debug("hicolor_image_import()\n");
 
-// if(CheckTGA()==0)        // Valid File
-// {
-    // Equivalent of CheckTGA()
-
     // TODO: input guarding
     // TODO: deduplicate some of the array copying around
-    // for (y=0; y<pTGA->YSize; y++)
     uint8_t * p_input_img = p_loaded_image->p_img_data;
 
-    for (int y=0; y< 144; y++) {
-        // for (x=0; x<pTGA->XSize; x++)
+    for (int y=0; y< image_height; y++) {
         for (int x=0; x< 160; x++) {
-            // y1 = pTGA->YSize-1-y;
 
-            // b=pTGA->data[count][0];
-            // g=pTGA->data[count][1];
-            // r=pTGA->data[count++][2];
-            // if (yflip)
-            //     y1 = y;
-
-            // pic2[x][y1][0] = (u8)(r & 0xf8);
-            // pic2[x][y1][1] = (u8)(g & 0xf8);
-            // pic2[x][y1][2] = (u8)(b & 0xf8);
             // Clamp to CGB max R/G/B value in RGB 888 mode (31u << 3)
-
             // png_image[].rgb -> pic2[].rgb -> pBitssource[].bgr??
             pic2[x][y][0] = (p_input_img[RGB_RED]   & 0xf8u);
             pic2[x][y][1] = (p_input_img[RGB_GREEN] & 0xf8u);
@@ -216,37 +230,20 @@ static void hicolor_image_import(image_data * p_loaded_image) {
         }
     }
 
-    // TODO: It's convoluted, but pBitssource & pBitsdest are used for:
+    // TODO: Eventually clean up data pathway to remove some vestigial former display rendering buffers
+    // It's convoluted, but pBitssource & pBitsdest are used for:
     // - display as windows DIBs (formerly)
     // - and for some calculations at the end of ConvertRegions()
-    for (int y=0; y<144; y++) {
+    for (int y=0; y<image_height; y++) {
         for (int x=0; x<160; x++) {
             for (int z=0; z<3; z++) {
                 // TODO: (2-z) seems to be swapping RGB for BGR?
-                *(pBitssource+(143-y)*3*160+x*3+z) = pic2[x][y][2-z];            // Invert the dib, cos windows likes it like that !!
+                *(pBitssource+(image_y_max-y)*3*160+x*3+z) = pic2[x][y][2-z];            // Invert the dib, cos windows likes it like that !!
             }
         }
     }
 
 }
-
-
-// TODO: delete
-// // TODO: Don't really care about this, but may need to set the values
-// static void hicolor_RGB_sliders(uint8_t r, uint8_t g, uint8_t b) {
-
-//     // TODO:
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER1,TBM_SETRANGE,TRUE,MAKELONG(0,50));            // Set up sliders for RGB
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER1,TBM_SETPOS,1,25);
-
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER2,TBM_SETRANGE,TRUE,MAKELONG(0,50));
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER2,TBM_SETPOS,1,25);
-
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER3,TBM_SETRANGE,TRUE,MAKELONG(0,50));
-//     // SendDlgItemMessage(hdwnd,IDC_SLIDER3,TBM_SETPOS,1,25);
-// }
-
-
 
 
 // TODO: fix
@@ -256,22 +253,14 @@ static void hicolor_convert(void) {
 
     for(int x=0; x<160; x++)
     {
-        for(int y=0; y<144; y++)
+        for(int y=0; y<image_height; y++)
         {
-            // TODO: Removed RGB weighting. delete it
-            // pic[x][y][0]=(u8)(pic2[x][y][0]*RWeight/100);
-            // pic[x][y][1]=(u8)(pic2[x][y][1]*GWeight/100);
-            // pic[x][y][2]=(u8)(pic2[x][y][2]*BWeight/100);
             pic[x][y][0] = pic2[x][y][0];
             pic[x][y][1] = pic2[x][y][1];
             pic[x][y][2] = pic2[x][y][2];
 
             for(int i=0; i<3; i++)
             {
-                // TODO: delete, without weighting above values will never be > 255
-                // if(pic[x][y][i] > 255)
-                //     pic[x][y][i] = 255;
-
                 *(Data + y*160*3+x*3+i) = pic[x][y][i];
             }
         }
@@ -289,10 +278,11 @@ static void hicolor_save(const char * fname_base) {
 }
 
 
-// Currently expects 160x144 x RGB888
+// Currently expects width x height x 3(RGB888)
 void hicolor_process_image(image_data * p_loaded_image, const char * fname_base) {
     log_debug("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
 
+    hicolor_vars_prep(p_loaded_image);
     hicolor_image_import(p_loaded_image);
     hicolor_convert();
     hicolor_save(fname_base);
@@ -304,8 +294,6 @@ void hicolor_process_image(image_data * p_loaded_image, const char * fname_base)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// TODO: C output mode as well (or could just be header file for use with C wrappers that incbin)
 
 void ExportTileSet(const char * fname_base)
 {
@@ -320,12 +308,12 @@ void ExportTileSet(const char * fname_base)
     strcat(filename, ".til");
     log_verbose("Writing Tile Patterns to: %s\n", filename);
 
-    #define OUTBUF_SZ_TILES ((144 / 8) * (160 / 8) * 8 * 2) // TODO: make this controllable
-    uint8_t output_buf[OUTBUF_SZ_TILES];
+    int outbuf_sz_tiles = ((image_height / 8) * (160 / 8) * 8 * 2);
+    uint8_t output_buf[outbuf_sz_tiles];
     uint8_t * p_buf = output_buf;
 
     // Write out tilemap data, Left -> Right, Top -> Bottom, 16 bytes per tile
-    for (y=0; y<144; y=y+8)
+    for (y=0; y<image_height; y=y+8)
     {
         for (x=0; x<160; x=x+8)
         {
@@ -348,7 +336,7 @@ void ExportTileSet(const char * fname_base)
         }
     }
 
-    if (!file_write_from_buffer(filename, output_buf, OUTBUF_SZ_TILES))
+    if (!file_write_from_buffer(filename, output_buf, outbuf_sz_tiles))
         set_exit_error();
 }
 
@@ -368,12 +356,12 @@ void ExportPalettes(const char * fname_base)
     strcat(filename, ".pal");
     log_verbose("Writing Palette to: %s\n", filename);
 
-    #define OUTBUF_SZ_PALS (((Y_REGION_COUNT_BOTH_SIDES) * 4 * 4 * 2) + 1) // TODO: make this controllable
-    uint8_t output_buf[OUTBUF_SZ_PALS];
+    int outbuf_sz_pals = (((y_region_count_both_sides) * 4 * 4 * 2) + 1);
+    uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
 
 
-    for (i = 0; i < (Y_REGION_COUNT_BOTH_SIDES); i++) // Number of palette sets (left side updates + right side updates)
+    for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
     {
         for (j = 0; j < 4; j++) // Each palette in the set
         {
@@ -396,7 +384,7 @@ void ExportPalettes(const char * fname_base)
     // TODO: What is this and why? :)
     *p_buf++ = 0x2d;
 
-    if (!file_write_from_buffer(filename, output_buf, OUTBUF_SZ_PALS))
+    if (!file_write_from_buffer(filename, output_buf, outbuf_sz_pals))
         set_exit_error();
 
 }
@@ -417,16 +405,16 @@ void ExportAttrMap(const char * fname_base)
     strcat(filename, ".map");
     log_verbose("Writing Tile Map to: %s\n", filename);
 
-    #define OUTBUF_SZ_MAP (20 * 18) // TODO: make this controllable
-    uint8_t output_buf_map[OUTBUF_SZ_MAP];
+    int outbuf_sz_map = (20 * y_height_in_tiles);
+    uint8_t output_buf_map[outbuf_sz_map];
 
 
     uint8_t * p_buf_map = output_buf_map;
 
-    for (i = 0; i < (20 * 18); i++)
+    for (i = 0; i < (20 * y_height_in_tiles); i++)
         *p_buf_map++ = (u8)(((uint8_t) i < 128) ? ((uint8_t)i) + 128 : ((uint8_t)i) - 128);
 
-    if (!file_write_from_buffer(filename, output_buf_map, OUTBUF_SZ_MAP))
+    if (!file_write_from_buffer(filename, output_buf_map, outbuf_sz_map))
         set_exit_error();
 
 
@@ -438,7 +426,7 @@ void ExportAttrMap(const char * fname_base)
     p_buf_map = output_buf_map;
     i = 0;
 
-    for (y = 0; y < 18; y++)
+    for (y = 0; y < y_height_in_tiles; y++)
     {
         for (x = 0; x < 20; x++)
         {
@@ -449,7 +437,7 @@ void ExportAttrMap(const char * fname_base)
         }
     }
 
-    if (!file_write_from_buffer(filename, output_buf_map, OUTBUF_SZ_MAP))
+    if (!file_write_from_buffer(filename, output_buf_map, outbuf_sz_map))
         set_exit_error();
 }
 
@@ -558,7 +546,7 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
     {
         for(x=StartX;x<(StartX+Width);x++)
         {
-            scradd=(143-y)*(160*3)+x*3;
+            scradd=(image_y_max-y)*(160*3)+x*3;
             tot=(*(src+scradd)-*(dest+scradd)) * (*(src+scradd)-*(dest+scradd));
             tot+=(*(src+scradd+1)-*(dest+scradd+1)) * (*(src+scradd+1)-*(dest+scradd+1));
             tot+=(*(src+scradd+2)-*(dest+scradd+2)) * (*(src+scradd+2)-*(dest+scradd+2));
@@ -610,7 +598,7 @@ void ConvertToHiColor(int ConvertType)
 
             StartSplit=LConversion-3;
             NumSplit=1;
-            Steps=144;
+            Steps=image_height;
             break;
     }
 
@@ -633,7 +621,7 @@ void ConvertToHiColor(int ConvertType)
 
         default:
 
-            Steps+=144;
+            Steps+=image_height;
             break;
     }
 
@@ -641,10 +629,12 @@ void ConvertToHiColor(int ConvertType)
     // Convert left side with one extra tile of height to fix
     // the glitching where the last scanline on left bottom region
     // lacks tile and palette data
-    res=ConvertRegions(0,1,0,Y_HEIGHT_IN_TILES_LEFT,StartSplit,NumSplit,ConvertType);        // Step through all options
-    ConvertRegions(0,1,0,Y_HEIGHT_IN_TILES_LEFT,res,1,ConvertType);
+    res=ConvertRegions(0,1,0,y_height_in_tiles_left,StartSplit,NumSplit,ConvertType);        // Step through all options
+    ConvertRegions(0,1,0,y_height_in_tiles_left,res,1,ConvertType);
 
-    for(y=0;y<189;y++)
+    // Formerly: for(y=0;y<189;y++)
+    // Treating it as a typo (intended a "18") since 189 would be out of bounds for the original array
+    for(y=0;y<y_height_in_tiles_left;y++)
         Best[0][y]=res;
 
 
@@ -675,7 +665,7 @@ void ConvertToHiColor(int ConvertType)
             break;
     }
 
-    for(y=0;y<18;y++)
+    for(y=0;y<y_height_in_tiles_right;y++)
     {
         res=ConvertRegions(1,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
         ConvertRegions(1,1,y,1,res,1,ConvertType);
@@ -685,7 +675,7 @@ void ConvertToHiColor(int ConvertType)
 
     for(MastX=0;MastX<2;MastX++)
     {
-        for(MastY=0;MastY<18;MastY++)
+        for(MastY=0;MastY<y_height_in_tiles_right;MastY++)
         {
             Line=Best[MastX][MastY];
             width=0;
@@ -704,13 +694,13 @@ void ConvertToHiColor(int ConvertType)
 
 
     // TODO: fix me -> pBitsdest being used in conversion process
-    for(y=0;y<144;y++)
+    for(y=0;y<image_height;y++)
     {
         for(x=0;x<160;x++)
         {
-            raw[0][x][y][0] = *(pBitsdest+(143-y)*3*160+x*3+2);
-            raw[0][x][y][1] = *(pBitsdest+(143-y)*3*160+x*3+1);
-            raw[0][x][y][2] = *(pBitsdest+(143-y)*3*160+x*3);
+            raw[0][x][y][0] = *(pBitsdest+(image_y_max-y)*3*160+x*3+2);
+            raw[0][x][y][1] = *(pBitsdest+(image_y_max-y)*3*160+x*3+1);
+            raw[0][x][y][2] = *(pBitsdest+(image_y_max-y)*3*160+x*3);
 
             RGBQUAD GBView=translate(raw[0][x][y]);
 
@@ -776,7 +766,7 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                         // (Left side calcs hang off top and bottom of screen
                         // due to Left/Right palette update interleaving)
                         s32 y_line = (y*2+y2-y_offset);
-                        if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
+                        if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
                         for(x2=0;x2<tw;x2++)
                         {
@@ -809,7 +799,7 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                         // Skip if Y is outside allocated Palette size (prevents buffer overflow)
                         // (Left side calcs hang off top and bottom of screen
                         // due to Left/Right palette update interleaving)
-                        if (y >= Y_REGION_COUNT_LR_RNDUP) continue;
+                        if (y >= y_region_count_lr_rndup) continue;
 
                         IdealPal[x*4+x1][y][y2][0]=QuantizedPalette[y2][2];
                         IdealPal[x*4+x1][y][y2][1]=QuantizedPalette[y2][1];
@@ -823,14 +813,14 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                             // Skip if Y line is outside image borders (prevents buffer overflow)
                             // since Left side calcs hang off top and bottom of image/screen
                             s32 y_line = (y*2+y2-y_offset);
-                            if ((y_line < IMAGE_Y_MIN) || (y_line > IMAGE_Y_MAX)) continue;
+                            if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
                             col=Picture256[y2*tw+x2];
                             out[x*80+x2+ts][y*2+y2-y_offset]=col;
 
                             for(i=0;i<3;i++)
                             {
-                                *(pBitsdest+(143-(y*2+y2-y_offset))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
+                                *(pBitsdest+(image_y_max-(y*2+y2-y_offset))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
                             }
                         }
                     }

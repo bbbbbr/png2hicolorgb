@@ -53,7 +53,7 @@ typedef struct
 
 
 
-extern	u8	Picture256[160*144*3];
+extern	u8	Picture256[160*BUF_HEIGHT*3];
 extern	u8	QuantizedPalette[256][3];
 
 
