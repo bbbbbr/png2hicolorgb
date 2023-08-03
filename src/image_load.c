@@ -13,15 +13,13 @@
 #include "image_info.h"
 #include "options.h"
 
+#include <defines.h>
 #include <lodepng.h>
 
 
 static bool image_validate(image_data *);
 static bool image_load_png(image_data *, const char *);
 
-
-#define VALIDATE_WIDTH  160u
-#define VALIDATE_HEIGHT 144u
 
 // Validates incoming image properties
 // Return: true if success
@@ -32,8 +30,13 @@ static bool image_validate(image_data * p_decoded_image) {
         return false;
     }
 
-    if (p_decoded_image->height != VALIDATE_HEIGHT) {
-        log_error("Error: Image height is %d, must be %d\n", p_decoded_image->height, VALIDATE_HEIGHT);
+    // TODO: There is a soft upper bound of 25 since:
+    //       Width is currently fixed at 160 pixels (20 tiles)
+    //       20 tiles wide x 25 tiles high = 500 tiles
+    //       Which is the highest possible within the 512 available on the CGB
+    //       without reloading the tiles and maps using an offset
+    if ((p_decoded_image->height == 0) || (p_decoded_image->height > VALIDATE_HEIGHT)) {
+        log_error("Error: Image height is %d, must be between 0 and %d\n", p_decoded_image->height, VALIDATE_HEIGHT);
         return false;
     }
 
