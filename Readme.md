@@ -24,7 +24,8 @@ https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 - Console based, meant for integration with build toolchains
 - Fixes last scanline tile and palette update missing for Left side of screen
   - (For conversion methods 1-3, a few glitches still remain for method 0)
-- Removed the Jeff Frohwein conversion type due to unclear source license status
+- Accept images of various heights (8-256 pixels) instead of only 144 pixels tall
+- Removes the Jeff Frohwein conversion type (method 0) due to unclear source license status
 
 
 ```

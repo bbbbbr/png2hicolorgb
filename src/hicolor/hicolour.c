@@ -11,6 +11,7 @@
 
 
 #include <common.h>
+#include <options.h>
 #include <files.h>
 #include <image_info.h>
 #include <logging.h>
@@ -412,7 +413,11 @@ void ExportAttrMap(const char * fname_base)
     uint8_t * p_buf_map = output_buf_map;
 
     for (i = 0; i < (20 * y_height_in_tiles); i++)
-        *p_buf_map++ = (u8)(((uint8_t) i < 128) ? ((uint8_t)i) + 128 : ((uint8_t)i) - 128);
+        if (opt_get_map_tile_order() == OPT_MAP_TILE_SEQUENTIAL_ORDER)
+            *p_buf_map++ = i;
+        else
+            // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
+            *p_buf_map++ = (u8)(((uint8_t) i < 128) ? ((uint8_t)i) + 128 : ((uint8_t)i) - 128); // Previous ordering that ordered: 128 -> 255 -> 0 -> 127
 
     if (!file_write_from_buffer(filename, output_buf_map, outbuf_sz_map))
         set_exit_error();

@@ -121,18 +121,16 @@ void hicolor_start(const hicolor_data * p_hicolor) NONBANKED {
     // TODO: if less than screen height, then converter must emit tail palettes and the cutting scanline must be moved accordingly
     p_hicolor_height = (p_hicolor->height_in_tiles > DEVICE_SCREEN_HEIGHT) ? (DEVICE_SCREEN_PX_HEIGHT - 1) : ((p_hicolor->height_in_tiles << 3) - 1);
 
-    // TODO: change vmemcpy() to set_bkg_data(), after changing converter to emit data
-    // in the proper order, that will allow correct loading with LCDC_REG |= LCDCF_BG8000
-
     // Load the first 256 tiles or less and set BG Map
-    VBK_REG = VBK_TILES;
-    vmemcpy(_VRAM8800, p_hicolor->p_tiles, MIN(p_hicolor->tile_count, 256) * 16);
+    VBK_REG = VBK_BANK_0;
+    set_bkg_data(0u, MIN(p_hicolor->tile_count, 256), p_hicolor->p_tiles);
     set_bkg_tiles(0u, 0u, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_map);
+
     // Load remaining 256 tiles and set Attribute Map into alternate bank
-    VBK_REG = VBK_ATTRIBUTES;
-    if (p_hicolor->tile_count > 256) vmemcpy(_VRAM8800, p_hicolor->p_tiles + (256 * 16), (p_hicolor->tile_count - 256) * 16);
+    VBK_REG = VBK_BANK_1;
+    if (p_hicolor->tile_count > 256) set_bkg_data(0u, (p_hicolor->tile_count - 256), p_hicolor->p_tiles + (256 * 16));
     set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_attribute_map);
-    VBK_REG = VBK_TILES;
+    VBK_REG = VBK_BANK_0;
 
     // Set up and install the HiColor ISR
     CRITICAL {

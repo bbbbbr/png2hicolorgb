@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "path_ops.h"
+#include "options.h"
 #include "logging.h"
 #include "image_load.h"
 #include "c_source.h"
@@ -132,6 +133,7 @@ static void display_help(void) {
         "-p        : Show screen attribute pattern options (no processing)\n"
         "-L=N      : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)\n"
         "-R=N      : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
+        "--vaddrid : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png --type=3 -L=2 -R=2 --csource -o=my_output_filename\"\n"
@@ -214,10 +216,13 @@ static int handle_args(int argc, char * argv[]) {
                 return false; // Abort
             }
             snprintf(opt_filename_out, sizeof(opt_filename_out), "%s", argv[i] + strlen("-o="));
+
         // } else if (strstr(argv[i], "--keepext") == argv[i]) {
         //     opt_strip_output_filename_ext = false;
+
         } else if (strstr(argv[i], "--csource") == argv[i]) {
             opt_c_file_output = true;
+
         } else if (strstr(argv[i], "--bank=") == argv[i]) {
             opt_bank_num = strtol(argv[i] + strlen("--bank="), NULL, 10);
             if ((opt_bank_num < BANK_NUM_MIN) || (opt_bank_num > BANK_NUM_MAX)) {
@@ -226,6 +231,9 @@ static int handle_args(int argc, char * argv[]) {
                 show_help_and_exit = true;
                 return false; // Abort
             }
+
+        } else if (strstr(argv[i], "--vaddrid") == argv[i]) {
+            opt_set_map_tile_order(OPT_MAP_TILE_ORDER_BY_VRAM_ID);
 
         } else if (argv[i][0] == '-') {
             log_error("Unknown argument: %s\n\n", argv[i]);
