@@ -107,7 +107,8 @@ u8            LConversion;                   // Conversion type for left hand si
 u8            RConversion;                   // Conversion type for right hand side of the screen
 // HWND          Ghdwnd;                          // Global window handle
 u8            MapTileIDs[20][BUF_HEIGHT_IN_TILES];           // Attribute table for final render
-u8            MapAttributes[20][BUF_HEIGHT_IN_TILES];           // Attribute table for final render
+u8            MapAttributes[20][BUF_HEIGHT_IN_TILES];        // Attribute table for final render
+uint8_t       TileSet[20 * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
 // u8            OldLConv=0;                    // Conversion type
 // u8            OldRConv=0;
 uint8_t *     pBuffer;
@@ -150,6 +151,10 @@ int y_height_in_tiles_right;
 int y_height_in_tiles;
 int y_height_in_tiles_lr_rndup;
 
+
+static void PrepareTileSet(void);
+static void PrepareMap(void);
+static void PrepareAttributes(void);
 
 static void ExportPalettes(const char * fname_base);
 static void ExportTileSet(const char * fname_base);
@@ -280,6 +285,10 @@ static void hicolor_convert(void) {
 
 static void hicolor_save(const char * fname_base) {
     log_debug("hicolor_save()\n");
+    PrepareTileSet();
+    PrepareMap();
+    PrepareAttributes();
+
     ExportTileSet(fname_base);
     ExportPalettes(fname_base);
     ExportMap(fname_base);
@@ -304,22 +313,14 @@ void hicolor_process_image(image_data * p_loaded_image, const char * fname_base)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-static void ExportTileSet(const char * fname_base)
-{
-    char filename[MAX_PATH*2];
+static void PrepareTileSet(void) {
     uint32_t    byteWritten;
     u32      x, y;
     u8       c1,c2;
     u8       dx,dy;
     u8       c;
 
-    strcpy(filename, fname_base);
-    strcat(filename, ".til");
-    log_verbose("Writing Tile Patterns to: %s\n", filename);
-
-    int outbuf_sz_tiles = ((image_height / 8) * (160 / 8) * 8 * 2);
-    uint8_t output_buf[outbuf_sz_tiles];
-    uint8_t * p_buf = output_buf;
+    uint8_t * p_buf = TileSet;
 
     // Write out tilemap data, Left -> Right, Top -> Bottom, 16 bytes per tile
     for (y=0; y<image_height; y=y+8)
@@ -344,8 +345,65 @@ static void ExportTileSet(const char * fname_base)
             }
         }
     }
+}
 
-    if (!file_write_from_buffer(filename, output_buf, outbuf_sz_tiles))
+
+static void PrepareMap(void) {
+        // Set up export Map Tile IDs
+    // Note: The indexes are clipped to 0-255 (instead of 0-512), the attribte tile index+256 bit is auto-calculated in the attribute map
+    int tile_id = 0;
+    for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
+        for (int mapx = 0; mapx < 20; mapx++) {
+
+            if (opt_get_map_tile_order() == OPT_MAP_TILE_SEQUENTIAL_ORDER)
+                MapTileIDs[mapx][mapy] = (uint8_t)tile_id;
+            else // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
+                MapTileIDs[mapx][mapy] = (uint8_t)(((uint8_t) tile_id < 128) ? ((uint8_t)tile_id) + 128 : ((uint8_t)tile_id) - 128); // Previous ordering that ordered: 128 -> 255 -> 0 -> 127
+            tile_id++;
+        }
+    }
+}
+
+static void PrepareAttributes(void) {
+    // Set up the Map Attributes table
+    unsigned int tile_id = 0;
+    for(int MastY=0;MastY<y_height_in_tiles_right;MastY++)
+    {
+        for(int MastX=0;MastX<2;MastX++)
+        {
+            int Line=Best[MastX][MastY];
+            int width=0;
+            for(int i=0;i<4;i++)
+            {
+                TileOffset[i]=width;
+                TileWidth[i]=SplitData[Line][i];
+                width+=TileWidth[i];
+            }
+
+            for(int x=0;x<4;x++) {
+                for(int z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++) {
+                    MapAttributes[MastX*10+z][MastY]=x+MastX*4;
+                    // Mask in second CGB Tile Bank flag if tile index is over 256 tiles
+                    if (tile_id++ >= 256)
+                        MapAttributes[MastX*10+z][MastY] |= CGB_ATTR_TILES_BANK_1;
+                }
+            }
+        }
+    }
+}
+
+
+static void ExportTileSet(const char * fname_base)
+{
+    char filename[MAX_PATH*2];
+
+    strcpy(filename, fname_base);
+    strcat(filename, ".til");
+    log_verbose("Writing Tile Patterns to: %s\n", filename);
+
+    int outbuf_sz_tiles = ((image_height / 8) * (160 / 8) * 8 * 2);
+
+    if (!file_write_from_buffer(filename, TileSet, outbuf_sz_tiles))
         set_exit_error();
 }
 
@@ -682,46 +740,6 @@ void ConvertToHiColor(int ConvertType)
         Best[1][y]=res;
     }
 
-
-    // Set up the Map Attributes table
-    tile_id = 0;
-    for(MastY=0;MastY<y_height_in_tiles_right;MastY++)
-    {
-        for(MastX=0;MastX<2;MastX++)
-        {
-            Line=Best[MastX][MastY];
-            width=0;
-            for(i=0;i<4;i++)
-            {
-                TileOffset[i]=width;
-                TileWidth[i]=SplitData[Line][i];
-                width+=TileWidth[i];
-            }
-
-            for(x=0;x<4;x++) {
-                for(z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++) {
-                    MapAttributes[MastX*10+z][MastY]=x+MastX*4;
-                    // Mask in second CGB Tile Bank flag if tile index is over 256 tiles
-                    if (tile_id++ >= 256)
-                        MapAttributes[MastX*10+z][MastY] |= CGB_ATTR_TILES_BANK_1;
-                }
-            }
-        }
-    }
-
-    // Set up export Map Tile IDs
-    // Note: The indexes are clipped to 0-255 (instead of 0-512), the attribte tile index+256 bit is auto-calculated in the attribute map
-    tile_id = 0;
-    for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
-        for (int mapx = 0; mapx < 20; mapx++) {
-
-            if (opt_get_map_tile_order() == OPT_MAP_TILE_SEQUENTIAL_ORDER)
-                MapTileIDs[mapx][mapy] = (uint8_t)tile_id;
-            else // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
-                MapTileIDs[mapx][mapy] = (uint8_t)(((uint8_t) tile_id < 128) ? ((uint8_t)tile_id) + 128 : ((uint8_t)tile_id) - 128); // Previous ordering that ordered: 128 -> 255 -> 0 -> 127
-            tile_id++;
-        }
-    }
 
     // TODO: fix me -> pBitsdest being used in conversion process
     for(y=0;y<image_height;y++)

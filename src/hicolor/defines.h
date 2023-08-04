@@ -19,7 +19,8 @@ typedef struct tagRGBQUAD {
 #define CGB_ATTR_TILES_BANK_0   0x00u
 #define CGB_ATTR_TILES_BANK_1   0x08u
 
-#define RGB_SZ   3 // RGB888 size in bytes
+#define RGB_SZ   3    // RGB888 size in bytes
+#define TILE_SZ  16u  // Tile size in bytes: (8 x 8) pixels x 2 Bits per pixel
 
 #define u8	uint8_t
 #define u16	uint16_t
