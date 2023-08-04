@@ -16,6 +16,9 @@ typedef struct tagRGBQUAD {
   uint8_t rgbReserved;
 } RGBQUAD;
 
+#define CGB_ATTR_TILES_BANK_0   0x00u
+#define CGB_ATTR_TILES_BANK_1   0x08u
+
 #define RGB_SZ   3 // RGB888 size in bytes
 
 #define u8	uint8_t
