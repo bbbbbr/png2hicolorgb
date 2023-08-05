@@ -28,7 +28,7 @@ https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 
 ```
 png2hicolorgb input_image.png [options]
-version 1.4.0: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
+version 1.4.1: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
  ISR
 Convert an image to Game Boy Hi-Color format
 
