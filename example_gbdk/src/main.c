@@ -21,8 +21,7 @@ uint8_t buttons, buttons_prev;
 #define BUTTON_PRESSED(BUTTON_MASK)  (buttons & (BUTTON_MASK))
 
 // Array of pointers to the generated hicolor data structures
-const hicolor_data * const hicolors[] = {
-    &HICOLOR_VAR(example_image),
+const hicolor_data * hicolors[] = {
     &HICOLOR_VAR(test_pattern_tall),
     &HICOLOR_VAR(example_image),
     &HICOLOR_VAR(test_pattern_short)
@@ -74,9 +73,9 @@ void main(void) {
                 if ((p_hicolor->height_in_tiles * 8u) < DEVICE_SCREEN_PX_HEIGHT) {
                     VBK_REG = VBK_BANK_1;
                     set_bkg_data(BG_LAST_TILE, 1u, blank_tile);
-                    fill_bkg_rect(DEVICE_SCREEN_X_OFFSET, DEVICE_SCREEN_Y_OFFSET + (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT - (p_hicolor->height_in_tiles), BKGF_BANK1);
+                    fill_bkg_rect(0u, (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, BKGF_BANK1);
                     VBK_REG = VBK_BANK_0;
-                    fill_bkg_rect(DEVICE_SCREEN_X_OFFSET, DEVICE_SCREEN_Y_OFFSET + (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT - (p_hicolor->height_in_tiles), BG_LAST_TILE);
+                    fill_bkg_rect(0u, (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, BG_LAST_TILE);
                 }
 
                 DISPLAY_ON;
