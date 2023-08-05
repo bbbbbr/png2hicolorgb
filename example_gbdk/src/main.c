@@ -20,11 +20,16 @@ uint8_t buttons, buttons_prev;
 #define BUTTON_TOGGLED(BUTTON_MASK) ((buttons & (~buttons_prev)) & (BUTTON_MASK))
 #define BUTTON_PRESSED(BUTTON_MASK) (buttons & (BUTTON_MASK))
 
+typedef struct far_ptr_t {
+    uint8_t bank;
+    const void * ptr;
+} far_ptr_t;
+
 // Array of pointers to the generated hicolor data structures
-const hicolor_data * hicolors[] = {
-    &HICOLOR_VAR(test_pattern_tall),
-    &HICOLOR_VAR(example_image),
-    &HICOLOR_VAR(test_pattern_short)
+const far_ptr_t hicolors[] = {
+    { BANK(test_pattern_tall),  &HICOLOR_VAR(test_pattern_tall) },
+    { BANK(example_image),      &HICOLOR_VAR(example_image) },
+    { BANK(test_pattern_short), &HICOLOR_VAR(test_pattern_short) }
 };
 
 
@@ -34,6 +39,7 @@ void main(void) {
     bool     first_pass = true;
     uint8_t  scroll_limit = 0;
     const    hicolor_data * p_hicolor;
+    uint8_t  p_hicolor_bank;
 
     SHOW_BKG;
 
@@ -51,18 +57,20 @@ void main(void) {
             if (BUTTON_TOGGLED(J_A | J_B) || first_pass) {
 
                 // Set current image to show
-                p_hicolor = hicolors[img_select];
+                p_hicolor_bank = hicolors[img_select].bank;
+                p_hicolor = (const hicolor_data *)hicolors[img_select].ptr;
+
+                uint8_t bank_save = _current_bank;
+                SWITCH_ROM(p_hicolor_bank);
+
+                vsync();
+                DISPLAY_OFF;
 
                 // Reset Y scroll and set scroll range based on converted image height
                 SCY_REG = 0u;
                 if ((p_hicolor->height_in_tiles * 8u) > DEVICE_SCREEN_PX_HEIGHT)
                     scroll_limit = ((p_hicolor->height_in_tiles * 8u) - DEVICE_SCREEN_PX_HEIGHT);
                 else scroll_limit = 0;
-
-                // Load and display the HiColor image
-                vsync();
-                DISPLAY_OFF;
-                hicolor_start(p_hicolor);
 
                 // Optional:
                 // If the Hi Color image is shorter than screen height
@@ -77,6 +85,11 @@ void main(void) {
                     VBK_REG = VBK_BANK_0;
                     fill_bkg_rect(0u, (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, BG_LAST_TILE);
                 }
+
+                SWITCH_ROM(bank_save);
+
+                // Load and display the HiColor image
+                hicolor_start(p_hicolor, p_hicolor_bank);
 
                 DISPLAY_ON;
 

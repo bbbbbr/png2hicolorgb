@@ -45,11 +45,11 @@ bool file_c_output_write(const char * fname_base, int bank_num, int tile_count, 
             "#include <gbdk/platform.h>\n"
             "#include <gbdk/incbin.h>\n\n");
 
-        // If Bank Num is set add a .h bank ref
+        // If Bank Num is set add pragma
         if (bank_num != BANK_NUM_UNSET) {
             fprintf(file_out_c, "#pragma bank %d\n", bank_num);
-            fprintf(file_out_c, "BANKREF(%s)\n\n", varname);
         }
+        fprintf(file_out_c, "BANKREF(%s)\n\n", varname);
 
         fprintf(file_out_c,
             "#include <gbc_hicolor.h>\n"
@@ -96,11 +96,8 @@ bool file_c_output_write(const char * fname_base, int bank_num, int tile_count, 
     FILE * file_out_h = fopen(filename_h, "w");
     if (file_out_h) {
 
-        // If Bank Num is set add a .h bank ref
-        if (bank_num != BANK_NUM_UNSET) {
-            fprintf(file_out_h, "#include <gbdk/platform.h>\n\n");
-            fprintf(file_out_h, "BANKREF_EXTERN(%s)\n\n", varname);
-        }
+        fprintf(file_out_h, "#include <gbdk/platform.h>\n\n");
+        fprintf(file_out_h, "BANKREF_EXTERN(%s)\n\n", varname);
 
         fprintf(file_out_h,
             "#ifndef __%s_h_\n"
