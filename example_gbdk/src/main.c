@@ -56,15 +56,15 @@ void main(void) {
             // Change displayed Hi Color image when pressing A or B
             if (BUTTON_TOGGLED(J_A | J_B) || first_pass) {
 
+                vsync();
+                DISPLAY_OFF;
+
                 // Set current image to show
                 p_hicolor_bank = hicolors[img_select].bank;
                 p_hicolor = (const hicolor_data *)hicolors[img_select].ptr;
 
                 uint8_t bank_save = _current_bank;
                 SWITCH_ROM(p_hicolor_bank);
-
-                vsync();
-                DISPLAY_OFF;
 
                 // Reset Y scroll and set scroll range based on converted image height
                 SCY_REG = 0u;
