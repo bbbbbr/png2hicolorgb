@@ -64,8 +64,7 @@ void main(void) {
                 p_hicolor = (const hicolor_data *)hicolors[img_select].ptr;
 
                 uint8_t bank_save = _current_bank;
-                if (hicolor_bank)
-                    SWITCH_ROM(hicolor_bank);
+                if (hicolor_bank) SWITCH_ROM(hicolor_bank);
 
                 // Reset Y scroll and set scroll range based on converted image height
                 SCY_REG = 0u;
@@ -87,8 +86,7 @@ void main(void) {
                     fill_bkg_rect(0u, (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, BG_LAST_TILE);
                 }
 
-                if (hicolor_bank)
-                    SWITCH_ROM(bank_save);
+                SWITCH_ROM(bank_save);
 
                 // Load and display the HiColor image
                 hicolor_start(p_hicolor, hicolor_bank);
