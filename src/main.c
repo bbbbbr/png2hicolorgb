@@ -109,7 +109,7 @@ static void display_help(void) {
     log_standard(
         "\n"
         "png2hicolorgb input_image.png [options]\n"
-        VERSION": bbbbbr. Based on Glen Cook Windows hicolor.exe 1.2\n"
+        VERSION": bbbbbr. Based on Glen Cook's Windows GUI \"hicolour.exe\" 1.2\n"
         "Convert an image to Game Boy Hi-Color format\n"
         "\n"
         "Options\n"
