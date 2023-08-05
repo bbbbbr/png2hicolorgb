@@ -44,11 +44,13 @@ __asm
         ld hl, #_BCPS_REG
         ld (hl+), a                 ; HL now points to BCPD
 
-        .rept (8*4)                 ; read and set the the colors that come from previous lines
-            pop de
-            ld (hl), e
-            ld (hl), d
-        .endm
+        ld c, #(8 * 4)              ; read and set the the colors that come from previous lines
+2$:
+        pop de
+        ld (hl), e
+        ld (hl), d
+        dec c
+        jr nz, 2$
 
 0$:
         ldh a, (_STAT_REG)
@@ -64,20 +66,20 @@ __asm
         ldh (_IF_REG), a
 
 1$:
-        pop de                      ; preload the first two colors
-        pop bc
+        pop bc                      ; preload the first two colors
+        pop de
 
         xor a
         ldh (_IF_REG), a
         halt                        ; wait for mode 0
 
-        ld (hl), e                  ; set the first two colors
-        ld (hl), d
-        ld (hl), c
+        ld (hl), c                  ; set the first two colors
         ld (hl), b
+        ld (hl), e
+        ld (hl), d
 
-        .rept (4*4)-2
-            pop de                  ; read and set the rest of the colors
+        .rept (4*4)-2               ; read and set four palettes except the two previously set colors
+            pop de
             ld (hl), e
             ld (hl), d
         .endm
