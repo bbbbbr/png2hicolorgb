@@ -13,12 +13,12 @@ endif
 LCC = $(GBDK_HOME)bin/lcc
 
 # You can set flags for LCC here
-LCCFLAGS += -debug            # Uncomment to enable debug output
-# LCCFLAGS += -v              # Uncomment for lcc verbose output
-LCCFLAGS += -Wm-yC            # GB Color required for Hi Color
+LCCFLAGS += -debug # Uncomment to enable debug output
+# LCCFLAGS += -v     # Uncomment for lcc verbose output
+LCCFLAGS += -Wm-yC # GB Color required for Hi Color
 LCCFLAGS += -Wf-MMD -Wf-Wp-MP # Header file dependency output (-MMD) for Makefile use + per-header Phoney rules (-MP)
 LCCFLAGS += -Wl-yt0x19        # MBC5
-LCCFLAGS += -autobank -Wb-v   # Auto-bank packing
+LCCFLAGS += -autobank -Wb-v -Wb-ext=.rel # Auto-bank packing
 
 # For testing only: randomize autobank assignment
 # LCCFLAGS += -Wb-random -Wb-max=3 -Wb-v
@@ -51,6 +51,7 @@ ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
 # For Hi Color:
 # The HICOLORS entries should be first in the OBJS list so they get generated before anything which might depend on them
 HICOLORS     = $(foreach dir,$(HICOLORDIR),$(notdir $(wildcard $(dir)/*.png)))
+HICOLOR_SRCS = $(HICOLORS:%.png=$(OBJDIR)/%.c)
 OBJS         = $(HICOLORS:%.png=$(OBJDIR)/%.o) $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all: $(BINS)
@@ -68,6 +69,9 @@ DEPS = $(OBJS:%.o=%.d)
 .SECONDEXPANSION:
 $(OBJDIR)/%.c: $(HICOLORDIR)/%.png
 	$(PNG2HICOLORGB) $< $(HICOLOR_FLAGS) -o $@
+
+# Prevent make from deleting intermediary generated hi-color C source files
+.SECONDARY: $(HICOLOR_SRCS)
 
 # Compile hicolor .c files in "obj/" to .o object files
 $(OBJDIR)/%.o:	$(OBJDIR)/%.c
