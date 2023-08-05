@@ -11,7 +11,7 @@
 static uint16_t SP_SAVE;
 static uint8_t STAT_SAVE;
 static uint8_t * p_hicolor_palettes;
-static uint8_t p_hicolor_height;
+static uint8_t hicolor_last_scanline;
 
 
 // ISR function which updates 4 CGB palettes per scanline
@@ -82,7 +82,7 @@ __asm
             ld (hl), d
         .endm
 
-        ld a, (_p_hicolor_height)
+        ld a, (_hicolor_last_scanline)
         ld c, a
         ldh a, (_LY_REG)
         cp c
@@ -119,7 +119,7 @@ void hicolor_start(const hicolor_data * p_hicolor) NONBANKED {
     p_hicolor_palettes = p_hicolor->p_palette;
 
     // TODO: if less than screen height, then converter must emit tail palettes and the cutting scanline must be moved accordingly
-    p_hicolor_height = (p_hicolor->height_in_tiles > DEVICE_SCREEN_HEIGHT) ? (DEVICE_SCREEN_PX_HEIGHT - 1) : ((p_hicolor->height_in_tiles << 3) - 1);
+    hicolor_last_scanline = (p_hicolor->height_in_tiles > DEVICE_SCREEN_HEIGHT) ? (DEVICE_SCREEN_PX_HEIGHT - 1) : ((p_hicolor->height_in_tiles << 3) - 1);
 
     // Load the first 256 tiles or less and set BG Map
     VBK_REG = VBK_BANK_0;

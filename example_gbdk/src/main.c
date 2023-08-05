@@ -24,6 +24,7 @@ uint8_t buttons, buttons_prev;
 const hicolor_data * const hicolors[] = {
     &HICOLOR_VAR(example_image),
     &HICOLOR_VAR(test_pattern_tall),
+    &HICOLOR_VAR(example_image),
     &HICOLOR_VAR(test_pattern_short)
 };
 
