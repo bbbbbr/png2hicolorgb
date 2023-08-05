@@ -1,5 +1,5 @@
 # png2hicolorgb
-An updated version of Glenn Cook's Windows GUI "hicolour.exe" 1.2 conversion tool for the Game Boy Color. The starting code base was the 1.2 release.
+An updated version of Glen Cook's Windows GUI "hicolour.exe" 1.2 conversion tool for the Game Boy Color. The starting code base was the 1.2 release.
 
 # HiColor 
 "Hi Color" on the Game Boy Color is a technique for displaying backgrounds with thousands of colors instead being limtied to 32 colors for the entire screen background. It achieves this by changing ~16 colors of the background palette per scanline. The main tradeoffs are that it uses much of the Game Boy's available cpu processing per frame and requires more ROM space. The tile patterns, map, attributes and per-scanline palettes are pre-calculated using the PC based conversion tool.
@@ -28,14 +28,14 @@ https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 
 ```
 png2hicolorgb input_image.png [options]
-version 1.4.0: bbbbbr. Based on Glenn Cook's Windows GUI "hicolour.exe" 1.2
+version 1.4.0: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
  ISR
 Convert an image to Game Boy Hi-Color format
 
 Options
 -h         : Show this help
 -v*        : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
--o=*       : Set base output filename (otherwise from input image)
+-o <file>  : Set base output filename (otherwise from input image)
 --csource  : Export C source format with incbins for data files
 --bank=N   : Set bank number for C source output where N is decimal bank number 1-511
 --type=N   : Set conversion type where N is one of below 

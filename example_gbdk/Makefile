@@ -18,7 +18,7 @@ LCCFLAGS += -debug            # Uncomment to enable debug output
 LCCFLAGS += -Wm-yC            # GB Color required for Hi Color
 LCCFLAGS += -Wf-MMD -Wf-Wp-MP # Header file dependency output (-MMD) for Makefile use + per-header Phoney rules (-MP)
 LCCFLAGS += -Wl-yt0x19        # MBC5
-LCCFLAGS += -autobank         # Auto-bank packing
+LCCFLAGS += -autobank -Wb-v   # Auto-bank packing
 
 # For testing only: randomize autobank assignment
 # LCCFLAGS += -Wb-random -Wb-max=3 -Wb-v
@@ -67,7 +67,7 @@ DEPS = $(OBJS:%.o=%.d)
 # The resulting C files will get compiled to object files afterward
 .SECONDEXPANSION:
 $(OBJDIR)/%.c: $(HICOLORDIR)/%.png
-	$(PNG2HICOLORGB) $< $(HICOLOR_FLAGS) -o=$@
+	$(PNG2HICOLORGB) $< $(HICOLOR_FLAGS) -o $@
 
 # Compile hicolor .c files in "obj/" to .o object files
 $(OBJDIR)/%.o:	$(OBJDIR)/%.c

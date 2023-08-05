@@ -17,7 +17,7 @@
 #include <hicolour.h>
 
 
-#define VERSION "version 1.4.0"
+#define VERSION "version 1.4.1"
 
 static void init(void);
 static void cleanup(void);
@@ -115,7 +115,7 @@ static void display_help(void) {
         "Options\n"
         "-h         : Show this help\n"
         "-v*        : Set log level: \"-v\" verbose, \"-vQ\" quiet, \"-vE\" only errors, \"-vD\" debug\n"
-        "-o=*       : Set base output filename (otherwise from input image)\n"
+        "-o <file>  : Set base output filename (otherwise from input image)\n"
         // "--keepext   : Do not strip extension from output filename\n"
         "--csource  : Export C source format with incbins for data files\n"
         "--bank=N   : Set bank number for C source output where N is decimal bank number 1-511\n"
@@ -203,14 +203,12 @@ static int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-R=") == argv[i]) {
             hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-R="), NULL, 10));
 
-        } else if (strstr(argv[i], "-o=") == argv[i]) {
+        } else if (strstr(argv[i], "-o") == argv[i]) {
+            i++; // Move to next argument
             // Require colon and filename to be present
-             if (strlen(argv[i]) < strlen("-o=N")) {
-                log_standard("Error: -o specified but filename missing or invalid format. Ex: -o=my_base_output_filename\n");
-                show_help_and_exit = true;
-                return false; // Abort
-            }
-            snprintf(opt_filename_out, sizeof(opt_filename_out), "%s", argv[i] + strlen("-o="));
+             if (*argv[i] == '-')
+                log_standard("Warning: -o specified but filename has dash and looks like an option argument. Usage: -o my_base_output_filename\n");
+            snprintf(opt_filename_out, sizeof(opt_filename_out), "%s", argv[i]);
 
         // } else if (strstr(argv[i], "--keepext") == argv[i]) {
         //     opt_strip_output_filename_ext = false;
