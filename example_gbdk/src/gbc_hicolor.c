@@ -129,10 +129,11 @@ void hicolor_start(const hicolor_data * p_hicolor, uint8_t hicolor_bank) NONBANK
     }
 
     if (!p_hicolor) return;
-
     hicolor_palettes_bank = hicolor_bank;
+
     uint8_t bank_save = _current_bank;
-    SWITCH_ROM(hicolor_bank);
+    if (hicolor_bank > 0)
+        SWITCH_ROM(hicolor_bank);
 
     // Copy address of palette into local var used by HiColor ISR
     p_hicolor_palettes = p_hicolor->p_palette;
@@ -151,7 +152,8 @@ void hicolor_start(const hicolor_data * p_hicolor, uint8_t hicolor_bank) NONBANK
     set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, p_hicolor->height_in_tiles, p_hicolor->p_attribute_map);
     VBK_REG = VBK_BANK_0;
 
-    SWITCH_ROM(bank_save);
+    if (hicolor_bank > 0)
+        SWITCH_ROM(bank_save);
 
     // Set up and install the HiColor ISR
     CRITICAL {

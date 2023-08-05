@@ -39,7 +39,7 @@ void main(void) {
     bool     first_pass = true;
     uint8_t  scroll_limit = 0;
     const    hicolor_data * p_hicolor;
-    uint8_t  p_hicolor_bank;
+    uint8_t  hicolor_bank;
 
     SHOW_BKG;
 
@@ -60,11 +60,12 @@ void main(void) {
                 DISPLAY_OFF;
 
                 // Set current image to show
-                p_hicolor_bank = hicolors[img_select].bank;
+                hicolor_bank = hicolors[img_select].bank;
                 p_hicolor = (const hicolor_data *)hicolors[img_select].ptr;
 
                 uint8_t bank_save = _current_bank;
-                SWITCH_ROM(p_hicolor_bank);
+                if (hicolor_bank)
+                    SWITCH_ROM(hicolor_bank);
 
                 // Reset Y scroll and set scroll range based on converted image height
                 SCY_REG = 0u;
@@ -86,10 +87,11 @@ void main(void) {
                     fill_bkg_rect(0u, (p_hicolor->height_in_tiles), DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, BG_LAST_TILE);
                 }
 
-                SWITCH_ROM(bank_save);
+                if (hicolor_bank)
+                    SWITCH_ROM(bank_save);
 
                 // Load and display the HiColor image
-                hicolor_start(p_hicolor, p_hicolor_bank);
+                hicolor_start(p_hicolor, hicolor_bank);
 
                 DISPLAY_ON;
 
