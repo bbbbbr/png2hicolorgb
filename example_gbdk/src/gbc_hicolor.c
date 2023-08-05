@@ -22,9 +22,11 @@ __asm
         ldh a, (__current_bank)     ; switch ROM bank
         push af
         ld a, (_hicolor_palettes_bank)
+        or a
+        jr z, 3$
         ldh (__current_bank), a
         ld (_rROMB0), a
-
+3$:
         ld (_SP_SAVE), sp           ; save SP
 
         ld hl, #_p_hicolor_palettes ; load address of picture palettes buffer
