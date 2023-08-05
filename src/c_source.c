@@ -10,15 +10,13 @@
 #include "image_info.h"
 #include "path_ops.h"
 #include "logging.h"
+#include "options.h"
 
 
 // Writes a buffer to a file in C source format
 // Adds a matching .h if possible
 //
-bool file_c_output_write(const char * fname_base, int bank_num, image_data * p_image) {
-
-    int height_in_tiles = (p_image->height / TILE_HEIGHT_PX);
-    int tile_count      = height_in_tiles * (p_image->width / TILE_WIDTH_PX);
+bool file_c_output_write(const char * fname_base, int bank_num, int tile_count, int height_in_tiles) {
 
     char varname_withpath[MAX_PATH * 2];
     char filename_c[MAX_PATH * 2];

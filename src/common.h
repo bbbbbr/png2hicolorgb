@@ -6,12 +6,10 @@
 #define TILE_HEIGHT_PX       8
 #define TILE_WIDTH_PX        8
 
-#define BANK_NUM_UNSET 0
-#define BANK_NUM_MIN   1
-#define BANK_NUM_MAX   511
-
 #define MAX_STR_LEN     4096
 #define DEFAULT_STR_LEN 100
+
+#define ARRAY_LEN(A)  sizeof(A) / sizeof(A[0])
 
 #define MAX_PATH (MAX_STR_LEN)
 

@@ -20,7 +20,7 @@ LCCFLAGS += -Wf-MMD -Wf-Wp-MP # Header file dependency output (-MMD) for Makefil
 
 # For Hi Color:
 PNG2HICOLORGB = ../bin/png2hicolorgb
-HICOLOR_FLAGS = --type=1 -L=1 -R=1 --csource # Use conversion method 1, Adaptive attribute sizing for Left / Right side of screen, C source output
+HICOLOR_FLAGS = --type=1 -L=1 -R=1 --csource -v# Use conversion method 1, Adaptive attribute sizing for Left / Right side of screen, C source output
 # Add the object dir as an include dir since that's
 # where the converted png source files will get generated
 LCCFLAGS += -I$(OBJDIR) -I$(SRCDIR)

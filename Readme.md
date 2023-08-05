@@ -4,10 +4,8 @@ An updated version of Glenn Cook's Windows Game Boy Hi Colour conversion app. Th
 # HiColor 
 "Hi Color" on the Game Boy Color is a technique for displaying backgrounds with thousands of colors instead being limtied to 32 colors for the entire screen background. It achieves this by changing ~16 colors of the background palette per scanline. The main tradeoffs are that it uses much of the Game Boy's available cpu processing per frame and requires more ROM space. The tile patterns, map, attributes and per-scanline palettes are pre-calculated using the PC based conversion tool.
 
-
 ![Hi Color example image on a Game Boy Color](/info/gbc_hicolor_test_pattern.jpg)
 ![Hi Color test pattern on a Game Boy Color](/info/gbc_hicolor_example_image.jpg)
-
 
 # Pallete ISR
 The new palette update ISR is contributed by Toxa
@@ -18,15 +16,15 @@ Example image Pixel art originally by RodrixAP under Creative Commons Attributio
 https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 
 
-# Changes:
-- Support for PNG image files
-- Support for multiple OS platforms: Linux, Windows, MacOS
-- Console based, meant for integration with build toolchains
-- Fixes last scanline tile and palette update missing for Left side of screen
-  - (For conversion methods 1-3, a few glitches still remain for method 0)
-- Accept images of various heights (8-256 pixels) instead of only 144 pixels tall
-- Removes the Jeff Frohwein conversion type (method 0) due to unclear source license status
-
+# Changes vs original:
+- Changed to be a console utility, meant for integration with build toolchains
+- Added support for PNG image files
+- Added support for multiple OS platforms: Linux, Windows, MacOS
+- Added support for images of various heights (8-256 pixels) instead of fixed 144 pixels high
+- Added selectable map tile index mode
+- Added tile deduplication (including v/h flipped, only beneficial for some images)
+- Fixed last scanline tile and palette update missing for Left side of screen
+- Removed the "original" mode quantizer and conversion type (Jeff Frohwein/etc, method 0) due to unclear source license status. It was faster, but the other methods tend to have better output.
 
 ```
 png2hicolorgb input_image.png [options]
@@ -34,21 +32,24 @@ version 1.4.0: bbbbbr. Based on Glen Cook Windows hicolor.exe 1.2
 Convert an image to Game Boy Hi-Color format
 
 Options
--h        : Show this help
--v*       : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
--o=*      : Set base output filename (otherwise from input image)
---csource : Export C source format with incbins for data files
---bank=N  : Set bank number for C source output where N is decimal bank number 1-511
---type=N  : Set conversion type where N is one of below 
-             1: Median Cut - No Dither (*Default*)
-             2: Median Cut - With Dither
-             3: Wu Quantiser
--p        : Show screen attribute pattern options (no processing)
--L=N      : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)
--R=N      : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
+-h         : Show this help
+-v*        : Set log level: "-v" verbose, "-vQ" quiet, "-vE" only errors, "-vD" debug
+-o=*       : Set base output filename (otherwise from input image)
+--csource  : Export C source format with incbins for data files
+--bank=N   : Set bank number for C source output where N is decimal bank number 1-511
+--type=N   : Set conversion type where N is one of below 
+              1: Median Cut - No Dither (*Default*)
+              2: Median Cut - With Dither
+              3: Wu Quantiser
+-p         : Show screen attribute pattern options (no processing)
+-L=N       : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)
+-R=N       : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
+--vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)
+--nodedupe : Turn off tile pattern deduplication
 
 Example 1: "png2hicolorgb myimage.png"
-Example 2: "png2hicolorgb myimage.png --type=3 -L=2 -R=2 --csource -o=my_output_filename"
+Example 2: "png2hicolorgb myimage.png --csource -o=my_output_filename"
+* Default settings provide good results. Better quality but slower: "--type=3 -L=2 -R=2"
 
 Historical credits and info:
    Original Concept : Icarus Productions

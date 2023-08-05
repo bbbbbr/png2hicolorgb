@@ -15,6 +15,8 @@
 #include <files.h>
 #include <image_info.h>
 #include <logging.h>
+#include <c_source.h>
+#include <tile_dedupe.h>
 
 /* Gameboy Hi-Colour Convertor */
 /* Glen Cook */
@@ -109,6 +111,8 @@ u8            RConversion;                   // Conversion type for right hand s
 u8            MapTileIDs[20][BUF_HEIGHT_IN_TILES];           // Attribute table for final render
 u8            MapAttributes[20][BUF_HEIGHT_IN_TILES];        // Attribute table for final render
 uint8_t       TileSet[20 * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
+uint8_t       TileSetDeduped[20 * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
+unsigned int  TileCountDeduped;
 // u8            OldLConv=0;                    // Conversion type
 // u8            OldRConv=0;
 uint8_t *     pBuffer;
@@ -155,6 +159,8 @@ int y_height_in_tiles_lr_rndup;
 static void PrepareTileSet(void);
 static void PrepareMap(void);
 static void PrepareAttributes(void);
+
+static void DedupeTileset(void);
 
 static void ExportPalettes(const char * fname_base);
 static void ExportTileSet(const char * fname_base);
@@ -284,15 +290,28 @@ static void hicolor_convert(void) {
 
 
 static void hicolor_save(const char * fname_base) {
+
+    // Default tile count to non-deduplicated number
+    int tile_count = y_height_in_tiles * (160 / TILE_WIDTH_PX);
+
     log_debug("hicolor_save()\n");
     PrepareTileSet();
     PrepareMap();
     PrepareAttributes();
 
+    if (opt_get_tile_dedupe()) {
+        DedupeTileset();
+        tile_count = TileCountDeduped;
+    }
+
     ExportTileSet(fname_base);
     ExportPalettes(fname_base);
     ExportMap(fname_base);
     ExportMapAttributes(fname_base);
+
+    if (opt_get_c_file_output()) {
+        file_c_output_write(fname_base, opt_get_bank_num(), tile_count, y_height_in_tiles);
+    }
 }
 
 
@@ -308,6 +327,43 @@ void hicolor_process_image(image_data * p_loaded_image, const char * fname_base)
 
 
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+static void DedupeTileset(void)
+{
+    unsigned int map_tile_id;
+    uint8_t new_tile_id, new_attribs;
+
+    TileCountDeduped = 0;
+    // Traverse all tiles in the image/map
+    for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
+        for (int mapx = 0; mapx < 20; mapx++) {
+
+            map_tile_id = MapTileIDs[mapx][mapy];
+            map_tile_id += (MapAttributes[mapx][mapy] & CGB_ATTR_TILES_BANK) ? CGB_TILES_START_BANK_1 : CGB_TILES_START_BANK_0;
+
+            if (!tileset_find_matching_tile(&TileSet[map_tile_id * TILE_SZ], &TileSetDeduped[0], TileCountDeduped, &new_tile_id, &new_attribs)) {
+                // If no match, copy tile to new tile set and save new index for remapping
+                new_tile_id = TileCountDeduped;
+                new_attribs = (TileCountDeduped < CGB_TILES_START_BANK_1) ? CGB_ATTR_TILES_BANK_0 : CGB_ATTR_TILES_BANK_1;
+                memcpy(&TileSetDeduped[TileCountDeduped * TILE_SZ], &TileSet[map_tile_id * TILE_SZ], TILE_SZ);
+                TileCountDeduped++;
+            }
+
+            // Update map data and attributes to new index
+            // Mask out everything except palettes and then apply the new attribs (bank, vflip, hflip)
+            MapTileIDs[mapx][mapy]    = new_tile_id;
+            MapAttributes[mapx][mapy] = (MapAttributes[mapx][mapy] & CGB_ATTR_PALLETES_ONLY) | new_attribs;
+        }
+    }
+    log_verbose("DedupeTileset(): Reduced tiles from %d (%d bytes) to %d (%d bytes) = %d bytes saved. %%%d of original size\n",
+                map_tile_id + 1, (map_tile_id + 1) * TILE_SZ, TileCountDeduped, TileCountDeduped * TILE_SZ,
+                ((map_tile_id + 1) * TILE_SZ) - (TileCountDeduped * TILE_SZ), (TileCountDeduped * 100) / (map_tile_id + 1));
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,20 +405,19 @@ static void PrepareTileSet(void) {
 
 
 static void PrepareMap(void) {
-        // Set up export Map Tile IDs
-    // Note: The indexes are clipped to 0-255 (instead of 0-512), the attribte tile index+256 bit is auto-calculated in the attribute map
+    // Set up export Map Tile IDs
+    // Note: The indexes are clipped to 0-255 (instead of 0-512),
+    // the attribute tile index+256 bit is auto-calculated in the attribute map in PrepareAttributes()
     int tile_id = 0;
     for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
         for (int mapx = 0; mapx < 20; mapx++) {
 
-            if (opt_get_map_tile_order() == OPT_MAP_TILE_SEQUENTIAL_ORDER)
-                MapTileIDs[mapx][mapy] = (uint8_t)tile_id;
-            else // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
-                MapTileIDs[mapx][mapy] = (uint8_t)(((uint8_t) tile_id < 128) ? ((uint8_t)tile_id) + 128 : ((uint8_t)tile_id) - 128); // Previous ordering that ordered: 128 -> 255 -> 0 -> 127
+            MapTileIDs[mapx][mapy] = (uint8_t)tile_id;
             tile_id++;
         }
     }
 }
+
 
 static void PrepareAttributes(void) {
     // Set up the Map Attributes table
@@ -401,14 +456,18 @@ static void ExportTileSet(const char * fname_base)
     strcat(filename, ".til");
     log_verbose("Writing Tile Patterns to: %s\n", filename);
 
-    int outbuf_sz_tiles = ((image_height / 8) * (160 / 8) * 8 * 2);
+    if (opt_get_tile_dedupe()) {
 
-    if (!file_write_from_buffer(filename, TileSet, outbuf_sz_tiles))
-        set_exit_error();
+        int outbuf_sz_tiles = TileCountDeduped * TILE_SZ;
+        if (!file_write_from_buffer(filename, TileSetDeduped, outbuf_sz_tiles))
+            set_exit_error();
+    } else {
+
+        int outbuf_sz_tiles = ((image_height / TILE_HEIGHT_PX) * (160 / TILE_WIDTH_PX) * 8 * 2);
+        if (!file_write_from_buffer(filename, TileSet, outbuf_sz_tiles))
+            set_exit_error();
+    }
 }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 static void ExportPalettes(const char * fname_base)
@@ -474,7 +533,14 @@ static void ExportMap(const char * fname_base)
     int tile_id = 0;
     for (int y = 0; y < y_height_in_tiles; y++) {
         for (int x = 0; x < 20; x++) {
-            output_buf_map[tile_id] = MapTileIDs[x][y];
+            uint8_t tile_num = MapTileIDs[x][y];
+
+            // This needs to happen here, after optional deduplication stage
+            // since that may rewrite the tile pattern order and indexes
+            if (opt_get_map_tile_order() != OPT_MAP_TILE_SEQUENTIAL_ORDER) // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
+                tile_num = ((tile_num < 128) ? (tile_num) + 128 : (tile_num) - 128); // Previous ordering that was: 128 -> 255 -> 0 -> 127
+
+            output_buf_map[tile_id] = tile_num;
             tile_id++;
         }
     }
