@@ -39,7 +39,7 @@ __asm
 
         rlca                        ; compensate odd/even line
         and #0x20                   ; if odd then start from 4-th palette; offset == 32
-        or  #0x80                   ; set auto-increment
+        or  #BCPSF_AUTOINC          ; set auto-increment
 
         ld hl, #_BCPS_REG
         ld (hl+), a                 ; HL now points to BCPD
