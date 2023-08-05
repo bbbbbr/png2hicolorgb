@@ -16,9 +16,9 @@ const uint8_t blank_tile[] = {0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0};
 #define ARRAY_LEN(A)  sizeof(A) / sizeof(A[0])
 
 uint8_t buttons, buttons_prev;
-#define UPDATE_BUTTONS()              buttons_prev = buttons; buttons = joypad()
-#define BUTTON_TICKED(BUTTON_MASK)  ((buttons & (BUTTON_MASK)) && !(buttons_prev & (BUTTON_MASK)))
-#define BUTTON_PRESSED(BUTTON_MASK)  (buttons & (BUTTON_MASK))
+#define UPDATE_BUTTONS()            (buttons_prev = buttons, buttons = joypad())
+#define BUTTON_TOGGLED(BUTTON_MASK) ((buttons & (~buttons_prev)) & (BUTTON_MASK))
+#define BUTTON_PRESSED(BUTTON_MASK) (buttons & (BUTTON_MASK))
 
 // Array of pointers to the generated hicolor data structures
 const hicolor_data * hicolors[] = {
@@ -48,7 +48,7 @@ void main(void) {
             UPDATE_BUTTONS();
 
             // Change displayed Hi Color image when pressing A or B
-            if (BUTTON_TICKED(J_A | J_B) || first_pass) {
+            if (BUTTON_TOGGLED(J_A | J_B) || first_pass) {
 
                 // Set current image to show
                 p_hicolor = hicolors[img_select];
