@@ -17,10 +17,17 @@ LCCFLAGS += -debug            # Uncomment to enable debug output
 # LCCFLAGS += -v              # Uncomment for lcc verbose output
 LCCFLAGS += -Wm-yC            # GB Color required for Hi Color
 LCCFLAGS += -Wf-MMD -Wf-Wp-MP # Header file dependency output (-MMD) for Makefile use + per-header Phoney rules (-MP)
+LCCFLAGS += -Wl-yt0x19        # MBC5
+LCCFLAGS += -autobank         # Auto-bank packing
+
+# For testing only: randomize autobank assignment
+# LCCFLAGS += -Wb-random -Wb-max=3 -Wb-v
 
 # For Hi Color:
 PNG2HICOLORGB = ../bin/png2hicolorgb
-HICOLOR_FLAGS = --type=1 -L=1 -R=1 --csource # Use conversion method type 1, Faster Adaptive attribute sizing for Left / Right side of screen, C source output
+# Use conversion method type 1, Faster Adaptive attribute sizing for Left / Right side of screen, C source output
+# Bank 255 for auto-banking
+HICOLOR_FLAGS = --type=1 -L=1 -R=1 --csource --bank=255
 # Add the object dir as an include dir since that's
 # where the converted png source files will get generated
 LCCFLAGS += -I$(OBJDIR) -I$(SRCDIR)
