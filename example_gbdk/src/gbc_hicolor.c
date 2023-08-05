@@ -113,7 +113,7 @@ void hicolor_start(const hicolor_data * p_hicolor) NONBANKED {
         remove_LCD(hicolor_palette_isr);
     }
 
-   if (!p_hicolor) return;
+    if (!p_hicolor) return;
 
     // Copy address of palette into local var used by HiColor ISR
     p_hicolor_palettes = p_hicolor->p_palette;
