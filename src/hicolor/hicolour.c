@@ -10,13 +10,13 @@
 #include "wu.h"
 
 
-#include <common.h>
-#include <options.h>
-#include <files.h>
-#include <image_info.h>
-#include <logging.h>
-#include <c_source.h>
-#include <tile_dedupe.h>
+#include "common.h"
+#include "options.h"
+#include "files.h"
+#include "image_info.h"
+#include "logging.h"
+#include "c_source.h"
+#include "tile_dedupe.h"
 
 /* Gameboy Hi-Colour Convertor */
 /* Glen Cook */
@@ -143,17 +143,17 @@ static      uint8_t *pBitsdest = Bitsdest;
 #define MAX_CONVERSION_TYPES    83
 #define MAX_QUANTISER_TYPES     4
 
-int image_y_min;
-int image_y_max;
-int image_height;
-int y_region_count_left;
-int y_region_count_right;
-int y_region_count_lr_rndup;
-int y_region_count_both_sides;
-int y_height_in_tiles_left;
-int y_height_in_tiles_right;
-int y_height_in_tiles;
-int y_height_in_tiles_lr_rndup;
+static unsigned int image_y_min;
+static unsigned int image_y_max;
+static unsigned int image_height;
+static unsigned int y_region_count_left;
+static unsigned int y_region_count_right;
+static unsigned int y_region_count_lr_rndup;
+static unsigned int y_region_count_both_sides;
+static unsigned int y_height_in_tiles_left;
+static unsigned int y_height_in_tiles_right;
+static unsigned int y_height_in_tiles;
+static unsigned int y_height_in_tiles_lr_rndup;
 
 
 static void PrepareTileSet(void);
@@ -236,8 +236,8 @@ static void hicolor_image_import(image_data * p_loaded_image) {
     // TODO: deduplicate some of the array copying around
     uint8_t * p_input_img = p_loaded_image->p_img_data;
 
-    for (int y=0; y< image_height; y++) {
-        for (int x=0; x< 160; x++) {
+    for (unsigned int y=0; y< image_height; y++) {
+        for (unsigned int x=0; x< 160; x++) {
 
             // Clamp to CGB max R/G/B value in RGB 888 mode (31u << 3)
             // png_image[].rgb -> pic2[].rgb -> pBitssource[].bgr??
@@ -253,9 +253,9 @@ static void hicolor_image_import(image_data * p_loaded_image) {
     // It's convoluted, but pBitssource & pBitsdest are used for:
     // - display as windows DIBs (formerly)
     // - and for some calculations at the end of ConvertRegions()
-    for (int y=0; y<image_height; y++) {
-        for (int x=0; x<160; x++) {
-            for (int z=0; z<3; z++) {
+    for (unsigned int y=0; y<image_height; y++) {
+        for (unsigned int x=0; x<160; x++) {
+            for (unsigned int z=0; z<3; z++) {
                 // TODO: (2-z) seems to be swapping RGB for BGR?
                 *(pBitssource+(image_y_max-y)*3*160+x*3+z) = pic2[x][y][2-z];            // Invert the dib, cos windows likes it like that !!
             }
@@ -270,15 +270,15 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 static void hicolor_convert(void) {
     log_debug("hicolor_convert()\n");
 
-    for(int x=0; x<160; x++)
+    for(unsigned int x=0; x<160; x++)
     {
-        for(int y=0; y<image_height; y++)
+        for(unsigned int y=0; y<image_height; y++)
         {
             pic[x][y][0] = pic2[x][y][0];
             pic[x][y][1] = pic2[x][y][1];
             pic[x][y][2] = pic2[x][y][2];
 
-            for(int i=0; i<3; i++)
+            for(unsigned int i=0; i<3; i++)
             {
                 *(Data + y*160*3+x*3+i) = pic[x][y][i];
             }
@@ -340,8 +340,8 @@ static void DedupeTileset(void)
 
     TileCountDeduped = 0;
     // Traverse all tiles in the image/map
-    for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
-        for (int mapx = 0; mapx < 20; mapx++) {
+    for (unsigned int mapy = 0; mapy < y_height_in_tiles; mapy++) {
+        for (unsigned int mapx = 0; mapx < 20; mapx++) {
 
             map_tile_id = MapTileIDs[mapx][mapy];
             map_tile_id += (MapAttributes[mapx][mapy] & CGB_ATTR_TILES_BANK) ? CGB_TILES_START_BANK_1 : CGB_TILES_START_BANK_0;
@@ -370,7 +370,6 @@ static void DedupeTileset(void)
 
 
 static void PrepareTileSet(void) {
-    uint32_t    byteWritten;
     u32      x, y;
     u8       c1,c2;
     u8       dx,dy;
@@ -408,11 +407,11 @@ static void PrepareMap(void) {
     // Set up export Map Tile IDs
     // Note: The indexes are clipped to 0-255 (instead of 0-512),
     // the attribute tile index+256 bit is auto-calculated in the attribute map in PrepareAttributes()
-    int tile_id = 0;
-    for (int mapy = 0; mapy < y_height_in_tiles; mapy++) {
-        for (int mapx = 0; mapx < 20; mapx++) {
+    uint8_t tile_id = 0;
+    for (unsigned int mapy = 0; mapy < y_height_in_tiles; mapy++) {
+        for (unsigned int mapx = 0; mapx < 20; mapx++) {
 
-            MapTileIDs[mapx][mapy] = (uint8_t)tile_id;
+            MapTileIDs[mapx][mapy] = tile_id;
             tile_id++;
         }
     }
@@ -422,9 +421,9 @@ static void PrepareMap(void) {
 static void PrepareAttributes(void) {
     // Set up the Map Attributes table
     unsigned int tile_id = 0;
-    for(int MastY=0;MastY<y_height_in_tiles_right;MastY++)
+    for(unsigned int MastY=0;MastY<y_height_in_tiles_right;MastY++)
     {
-        for(int MastX=0;MastX<2;MastX++)
+        for(unsigned int MastX=0;MastX<2;MastX++)
         {
             int Line=Best[MastX][MastY];
             int width=0;
@@ -473,9 +472,7 @@ static void ExportTileSet(const char * fname_base)
 static void ExportPalettes(const char * fname_base)
 {
     char filename[MAX_PATH * 2];
-    uint32_t    byteWritten;
-    uint8_t     tmpByte;
-    s32      i, j, k;
+    unsigned int      i, j, k;
     s32      r,g,b,v;
 
     strcpy(filename, fname_base);
@@ -531,8 +528,8 @@ static void ExportMap(const char * fname_base)
     uint8_t output_buf_map[outbuf_sz_map];
 
     int tile_id = 0;
-    for (int y = 0; y < y_height_in_tiles; y++) {
-        for (int x = 0; x < 20; x++) {
+    for (unsigned int y = 0; y < y_height_in_tiles; y++) {
+        for (unsigned int x = 0; x < 20; x++) {
             uint8_t tile_num = MapTileIDs[x][y];
 
             // This needs to happen here, after optional deduplication stage
@@ -562,9 +559,9 @@ static void ExportMapAttributes(const char * fname_base)
     uint8_t output_buf_map[outbuf_sz_map];
 
     int tile_id = 0;
-    for (int y = 0; y < y_height_in_tiles; y++)
+    for (unsigned int y = 0; y < y_height_in_tiles; y++)
     {
-        for (int x = 0; x < 20; x++)
+        for (unsigned int x = 0; x < 20; x++)
         {
             output_buf_map[tile_id++] = MapAttributes[x][y];
         }
@@ -696,14 +693,9 @@ void ConvertToHiColor(int ConvertType)
 {
     log_debug("ConvertToHiColor()\n");
     int        res;
-    int        x,y,z,i;
+    unsigned int        x,y;
     int        StartSplit=0;
     int        NumSplit=1;
-    int        Steps;
-    int        MastX,MastY;
-    int        Line;
-    int        width;
-    unsigned int tile_id;
 
     switch(LConversion)
     {
@@ -711,54 +703,26 @@ void ConvertToHiColor(int ConvertType)
 
             StartSplit=0;
             NumSplit=6;
-            Steps=504;
             break;
 
         case 1:
 
             StartSplit=0;
             NumSplit=10;
-            Steps=792;
             break;
 
         case 2:
 
             StartSplit=0;
             NumSplit=80;
-            Steps=5832;
             break;
 
         default:
 
             StartSplit=LConversion-3;
             NumSplit=1;
-            Steps=image_height;
             break;
     }
-
-    switch(RConversion)
-    {
-        case 0:
-
-            Steps+=504;
-            break;
-
-        case 1:
-
-            Steps+=792;
-            break;
-
-        case 2:
-
-            Steps+=5832;
-            break;
-
-        default:
-
-            Steps+=image_height;
-            break;
-    }
-
 
     // Convert left side with one extra tile of height to fix
     // the glitching where the last scanline on left bottom region
@@ -833,12 +797,12 @@ void ConvertToHiColor(int ConvertType)
 // StartY = 0 - 17 : Starting attribute block
 // Height = Number of attribute blocks to check / process
 
-int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType)
+int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY, unsigned int Height, unsigned int StartJ, unsigned int FinishJ, int ConvertType)
 {
     log_debug("ConvertRegions()\n");
-    u32        Accum,width,x1,ts,tw,y2,x2,y_offset;
-    s32        x,y;
-    s32        i,j;
+    u32        width,x1,ts,tw,y2,x2,y_offset;
+    unsigned int        x,y;
+    unsigned int        i,j;
     u8        col;
 
 
@@ -856,7 +820,6 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
 
         for(j=StartJ;j<(StartJ+FinishJ);j++)
         {
-            Accum=0;
             width=0;
             for(i=0;i<4;i++)
             {
@@ -879,7 +842,7 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                         // Skip if Y line is outside image borders (prevents buffer overflow)
                         // (Left side calcs hang off top and bottom of screen
                         // due to Left/Right palette update interleaving)
-                        s32 y_line = (y*2+y2-y_offset);
+                        unsigned int y_line = (y*2+y2-y_offset);
                         if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
                         for(x2=0;x2<tw;x2++)
@@ -895,12 +858,12 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                     switch(ConvertType)
                     {
                         case 0:
-                            to_indexed(Data,4,0,TileWidth[x1],2);            // Median Reduction No Dither
+                            to_indexed(Data,0,TileWidth[x1],2);            // Median Reduction No Dither
                             break;
 
                         case 1:
 
-                            to_indexed(Data,4,1,TileWidth[x1],2);            // Median Reduction With Dither
+                            to_indexed(Data,1,TileWidth[x1],2);            // Median Reduction With Dither
                             break;
 
                         case 2:
@@ -926,7 +889,7 @@ int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, in
                         {
                             // Skip if Y line is outside image borders (prevents buffer overflow)
                             // since Left side calcs hang off top and bottom of image/screen
-                            s32 y_line = (y*2+y2-y_offset);
+                            unsigned int y_line = (y*2+y2-y_offset);
                             if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
                             col=Picture256[y2*tw+x2];

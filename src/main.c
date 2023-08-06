@@ -23,7 +23,9 @@ static void init(void);
 static void cleanup(void);
 static void display_help(void);
 static int  handle_args(int argc, char * argv[]);
+#ifdef DRAG_AND_DROP_MODE
 static void set_drag_and_drop_mode_defaults(void);
+#endif
 
 image_data src_image;
 char filename_in[MAX_STR_LEN] = {'\0'};
@@ -147,11 +149,13 @@ static void display_help(void) {
 }
 
 
+#ifdef DRAG_AND_DROP_MODE
 // Default options for Windows Drag and Drop recipient mode
 static void set_drag_and_drop_mode_defaults(void) {
 
     // Set some options here
 }
+#endif
 
 
 static int handle_args(int argc, char * argv[]) {

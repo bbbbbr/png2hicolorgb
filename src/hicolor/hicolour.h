@@ -57,7 +57,7 @@ void hicolor_process_image(image_data * p_decoded_image, const char * fname);
 RGBQUAD translate(uint8_t rgb[3]);
 unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height);
 void ConvertToHiColor(int ConvertType);
-int ConvertRegions(int StartX, int Width, int StartY, int Height, int StartJ, int FinishJ, int ConvertType);
+int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY, unsigned int Height, unsigned int StartJ, unsigned int FinishJ, int ConvertType);
 
 
 #endif
