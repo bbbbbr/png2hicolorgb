@@ -22,7 +22,7 @@ PACKDIR = package
 MKDIRS = $(OBJDIR) $(BINDIR) $(PACKDIR) $(EXTRA_OBJDIRS)
 
 INCS = -I"$(SRCDIR)" -I"$(LODEPNGDIR)" -I"$(HICOLORDIR)"
-CFLAGS = $(INCS) -Wno-format-truncation
+CFLAGS = $(INCS) -std=c11 -Wall -Wextra -pedantic
 CFLAGS += -MMD -MP
 
 
