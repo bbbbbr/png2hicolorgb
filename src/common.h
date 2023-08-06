@@ -3,6 +3,8 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include <stdbool.h>
+
 #define TILE_HEIGHT_PX       8
 #define TILE_WIDTH_PX        8
 
