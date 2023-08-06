@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 mkdir -p bin obj
 # --type=1  : Median cut conversion with no dither
