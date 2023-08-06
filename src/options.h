@@ -3,8 +3,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define BANK_NUM_UNSET 0
 #define BANK_NUM_MIN   1
