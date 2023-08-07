@@ -51,8 +51,8 @@ ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
 # For Hi Color:
 # The HICOLORS entries should be first in the OBJS list so they get generated before anything which might depend on them
 HICOLORS     = $(foreach dir,$(HICOLORDIR),$(notdir $(wildcard $(dir)/*.png)))
-HICOLOR_SRCS = $(HICOLORS:%.png=$(OBJDIR)/%.c)
-OBJS         = $(HICOLORS:%.png=$(OBJDIR)/%.o) $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
+HICOLOR_SRCS = $(HICOLORS:%.png=$(OBJDIR)/%.c) $(HICOLORS:%.png=$(OBJDIR)/%_pal.c)
+OBJS         = $(HICOLOR_SRCS:%.c=%.o) $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all: $(BINS)
 
