@@ -63,7 +63,7 @@ void main(void) {
 
                 // Set current image to show
                 hicolor_bank = hicolors[img_select].bank;
-                hicolor_bank_pal = hicolors[img_select].bank;
+                hicolor_bank_pal = hicolors[img_select].bank_pal;
                 p_hicolor = (const hicolor_data *)hicolors[img_select].ptr;
 
                 uint8_t bank_save = _current_bank;
