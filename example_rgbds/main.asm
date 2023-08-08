@@ -1,9 +1,21 @@
 INCLUDE "hardware.inc"
 
+
 SECTION "VBlank interrupt handler", ROM0[$40]
 
-	call hicolor_vbl
-	reti
+	push af
+	push bc
+	push hl
+	jp hicolor_vbl
+
+SECTION "STAT interrupt handler", ROM0[$48]
+
+	push af
+	push bc
+	push de
+	push hl
+	jp hicolor_stat
+
 
 SECTION "Load hi-color image", ROM0
 
@@ -11,12 +23,15 @@ LoadPicture:
 	ld [rROMB0], a
 
 	; Turn the screen off, as we'll be loading a *lot* of data!
+	di ; TODO: bit of a bodge to suppress the VBlank interrupt
 .waitVBlank
 	ldh a, [rLY]
 	cp 144
 	jr c, .waitVBlank
 	xor a
 	ldh [rLCDC], a
+	ldh [rIF], a
+	ei
 
 	call LoadHiColorPicture
 
@@ -44,14 +59,17 @@ EntryPoint:
 	ldh [rKEY1], a
 	stop
 
-	ld a, IEF_VBLANK
+	xor a
+	ldh [rSTAT], a
+	ldh [rIF], a
+	ld a, IEF_VBLANK | IEF_STAT
 	ldh [rIE], a
+
+	ei
 
 	ld a, BANK(ExampleImage)
 	ld de, ExampleImage
 	call LoadPicture
-
-	ei
 
 .wait
 	halt

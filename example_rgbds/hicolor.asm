@@ -43,9 +43,18 @@ LoadHiColorPicture::
 
 	; And finally, register the pointer to the palette data.
 	ld a, e
-	ld [wHiColorPalAddr], a
+	ld [wPalettesAddr], a
+	ld [wPaletteCurPtr], a
 	ld a, d
-	ld [wHiColorPalAddr + 1], a
+	ld [wPalettesAddr + 1], a
+	ld [wPaletteCurPtr + 1], a
+
+	; Enable the STAT interrupt.
+	ld a, STATF_MODE10
+	ldh [rSTAT], a
+
+	; Note that BCPS will only be set by the VBlank interrupt, but that's fine because the first
+	; frame after turning the LCD on is not shown.
 	ret
 
 
@@ -89,129 +98,95 @@ LoadHiColorPicture::
 	jr nz, :-
 	ret
 
+
 ;***********************************************
 ;* VBlank Interrupt routine for Hicol Software *
 ;***********************************************
 
 hicolor_vbl::
+	ld a, BCPSF_AUTOINC
+	ldh [rBCPS], a
+	; Perform one copy, as two are needed before the beginning of the frame,
+	; but the queued interrupt will only perform one.
+	ld a, [wPalettesAddr]
+	ld l, a
+	ld a, [wPalettesAddr + 1]
+	ld h, a
+	ld bc, 16 << 8 | LOW(rBCPD)
+.copy
+	ld a, [hli]
+	ldh [c], a
+	ld a, [hli]
+	ldh [c], a
+	dec b
+	jr nz, .copy
 
-	ld [spbak], sp ;store SP.
+	; Write the pointer the interrupts will resume from.
+	ld a, l
+	ld [wPaletteCurPtr], a
+	ld a, h
+	ld [wPaletteCurPtr + 1], a
 
-	ld a, 1
-	ld [rVBK], a
+	; Note that a Mode 2 interrupt is queued at the beginning of scanline $90!
+	; It will copy the second half of the palettes in time for the first scanline.
+	pop hl
+	pop bc
+	pop af
+	reti
+
+
+hicolor_stat::
+	ld [wSPBackup], sp ; Save SP so we can return to normalcy later.
 
 	; Point SP to the palette data.
-	ld sp, wHiColorPalAddr
+	ld sp, wPaletteCurPtr
 	pop hl
 	ld sp, hl
 
-	ld a, $80 ;
-	ld hl, rBCPS ;setup palette write.
-	ld [hl], a ;
+	pop de ; Read one color.
+	pop bc ; Read a second one.
 
+	ld hl, rSTAT
+.waitBlank
+	bit 1, [hl] ; Wait for HBlank *or* VBlank.
+	jr nz, .waitBlank ; ; Write 32 palette bytes (16 colors, which is 4 palettes)
 
-	ld hl, rLY ;
-	xor a
-
-_wait:
-
-	cp [HL] ;
-	jr nz, _wait
-
-_palloop:
-
-	pop de ;get 2 palette values.
-
-	ld l, rSTAT & 255 ;point HL to STAT.
-
-_waitstat2:
-
-	bit 1, [hl] ;wait for HBlank.
-	jr nz, _waitstat2 ; ; Write 32 palette bytes (16 colors, which is 4 palettes)
-fti:
-
-	ld l, rBCPD & 255
-
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
+	ld l, LOW(rBCPD) ; hl = rBCPD
+	; Write the first color.
+	ld [hl], e
 	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de ;
-	ld [hl], e ;
+	; Write the second color.
+	ld [hl], c
+	ld [hl], b
+	; Write the rest.
+REPT 16 - 2 ; 16 colors, minus the two already written above.
+	pop de ; One color is two bytes.
+	ld [hl], e
 	ld [hl], d
+ENDR
 
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
+	; Save the read pointer for the next scanline.
+	ld [wPaletteCurPtr], sp
 
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-	pop de ;get 2 palette values.
-	ld [hl], e ;
-	ld [hl], d ;write 2 palette values.
-
-	pop de
-	ld [hl], e ;
-	ld [hl], d
-
-
-	ld a, [rLY] ; ; cp  142 ;test for bottom of image.
-				cp 143 ;test for bottom of image.
-	jr nz, _palloop ;
-
-	ld hl, spbak
-	ld a, [hli] ;
-	ld h, [hl] ;restore SP.
-	ld l, a ;
+	; Restore SP.
+	ld sp, wSPBackup
+	pop hl
 	ld sp, hl
 
-	ret
-
-
+	; Clean up and return.
+	pop hl
+	pop de
+	pop bc
+	pop af
+	reti
 
 
 SECTION "Hi-Color variables", WRAM0
 
-wHiColorPalAddr: dw
-spbak: dw ; TODO
+; Temporary storage for SP while the STAT handler is running.
+wSPBackup: dw
+
+; Base address where the palette data lives.
+wPalettesAddr: dw
+; This pointer advances through the palette data (see `wPalettesAddr`) as the frame progresses.
+wPaletteCurPtr: dw
