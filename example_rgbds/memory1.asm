@@ -33,23 +33,6 @@
 
 ;If all of these are already defined, don't do it again.
 
-        IF      !DEF(MEMORY1_ASM)
-MEMORY1_ASM  SET  1
-
-rev_Check_memory1_asm: MACRO
-;NOTE: REVISION NUMBER CHANGES MUST BE ADDED
-;TO SECOND PARAMETER IN FOLLOWING LINE.
-        IF      \1 > 1.1      ; <---- NOTE!!! PUT FILE REVISION NUMBER HERE
-        WARN    "Version \1 or later of 'memory1.asm' is required."
-        ENDC
-        ENDM
-
-        INCLUDE "hardware.inc"
-
-; Make sure include files are useable revisions.
-
-        rev_Check_hardware_inc   1.5
-
 ; Macro that pauses until VRAM available.
 
 lcd_WaitVRAM: MACRO
@@ -63,7 +46,7 @@ lcd_WaitVRAM: MACRO
 
         ENDM
 
-        SECTION "Memory1 Code",HOME
+        SECTION "Memory1 Code",ROM0
 
 ;***************************************************************************
 ;*
@@ -200,6 +183,3 @@ mem_CopyVRAM::
 		dec		b
 		jr		nz,.loop
 		ret
-
-        ENDC    ;MEMORY1_ASM
-
