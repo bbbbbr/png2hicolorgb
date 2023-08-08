@@ -147,10 +147,10 @@ bool get_path_without_filename(const char * path, char * path_only, uint32_t str
 
 
 // Case insensitive
-bool matches_extension(char * filename, char * extension) {
+bool matches_extension(char const * filename, char const * extension) {
 
     if (strlen(filename) >= strlen(extension)) {
-        char * str_ext = filename + (strlen(filename) - strlen(extension));
+        char const * str_ext = filename + (strlen(filename) - strlen(extension));
 
         return (strncasecmp(str_ext, extension, strlen(extension)) == 0);
     }

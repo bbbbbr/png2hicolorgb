@@ -14,6 +14,6 @@ void filename_replace_path(char * filename, char * new_path, size_t maxlen);
 const char * get_filename_from_path(const char * path);
 void filename_remove_extension(char * path);
 bool get_path_without_filename(const char * path, char * path_only, uint32_t str_max);
-bool matches_extension(char *, char *);
+bool matches_extension(char const *, char const *);
 
 #endif // _PATH_OPS_H

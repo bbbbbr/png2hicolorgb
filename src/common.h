@@ -18,11 +18,15 @@
 #ifndef __has_attribute
 #define __has_attribute(attr) 0
 #endif
+
 #if __has_attribute(format)
-#define FMT(kind, str_idx, first_to_check) __attribute__((format(kind, str_idx, first_to_check)))
+#define FMT(kind, str_idx, first_to_check) __attribute__(( format(kind, str_idx, first_to_check) ))
 #else
 #define FMT(kind, str_idx, first_to_check)
 #endif
+
+// Standard C11 syntax, but possibly a little confusing so here's a macro instead.
+#define NONNULL_PTR(name) name[static 1]
 
 enum {
     IMG_TYPE_PNG
