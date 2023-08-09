@@ -299,7 +299,7 @@ static void hicolor_save(const char * fname_base) {
     PrepareMap();
     PrepareAttributes();
 
-    if (opt_get_tile_dedupe()) {
+    if (opt_tile_dedupe) {
         DedupeTileset();
         tile_count = TileCountDeduped;
     }
@@ -309,8 +309,8 @@ static void hicolor_save(const char * fname_base) {
     ExportMap(fname_base);
     ExportMapAttributes(fname_base);
 
-    if (opt_get_c_file_output()) {
-        file_c_output_write(fname_base, opt_get_bank_num(), tile_count, y_height_in_tiles);
+    if (opt_c_file_output) {
+        file_c_output_write(fname_base, opt_bank_num, tile_count, y_height_in_tiles);
     }
 }
 
@@ -455,7 +455,7 @@ static void ExportTileSet(const char * fname_base)
     strcat(filename, ".til");
     VERBOSE("Writing Tile Patterns to: %s\n", filename);
 
-    if (opt_get_tile_dedupe()) {
+    if (opt_tile_dedupe) {
 
         int outbuf_sz_tiles = TileCountDeduped * TILE_SZ;
         if (!file_write_from_buffer(filename, TileSetDeduped, outbuf_sz_tiles))
@@ -534,8 +534,8 @@ static void ExportMap(const char * fname_base)
 
             // This needs to happen here, after optional deduplication stage
             // since that may rewrite the tile pattern order and indexes
-            if (opt_get_map_tile_order() != OPT_MAP_TILE_SEQUENTIAL_ORDER) // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
-                tile_num = ((tile_num < 128) ? (tile_num) + 128 : (tile_num) - 128); // Previous ordering that was: 128 -> 255 -> 0 -> 127
+            if (opt_map_use_sequential_tile_index != OPT_MAP_TILE_SEQUENTIAL_ORDER) // implied: == OPT_MAP_TILE_ORDER_BY_VRAM_ID
+                tile_num ^= 128; // Previous ordering that was: 128 -> 255 -> 0 -> 127
 
             output_buf_map[tile_id] = tile_num;
             tile_id++;

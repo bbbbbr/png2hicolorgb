@@ -123,14 +123,14 @@ static bool handle_bank(char const * param, int * restrict i, char * argv[]) {
         ERR("Error: Bank number %lu out of range\n", bank);
         return false;
     }
-    opt_set_bank_num(bank);
+    opt_bank_num = bank;
     return true;
 }
 
 static bool handle_csource(char const * param) {
     REJECT_PARAM("csource");
 
-    opt_set_c_file_output(true);
+    opt_c_file_output = true;
     return true;
 }
 
@@ -158,7 +158,7 @@ static bool handle_left(char const * param, int * restrict i, char * argv[]) {
 static bool handle_nodedupe(char const * param) {
     REJECT_PARAM("nodedupe");
 
-    opt_set_tile_dedupe(false);
+    opt_tile_dedupe = false;
     return true;
 }
 
@@ -213,7 +213,7 @@ static bool handle_type(char const * param, int * restrict i, char * argv[]) {
 static bool handle_vaddrid(char const * param) {
     REJECT_PARAM("vaddrid");
 
-    opt_set_map_tile_order(OPT_MAP_TILE_ORDER_BY_VRAM_ID);
+    opt_map_use_sequential_tile_index = OPT_MAP_TILE_ORDER_BY_VRAM_ID;
     return true;
 }
 
