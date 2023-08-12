@@ -2,14 +2,16 @@
 An updated version of Glen Cook's Windows GUI "hicolour.exe" 1.2 conversion tool for the Game Boy Color. The starting code base was the 1.2 release.
 
 # HiColor 
-"Hi Color" on the Game Boy Color is a technique for displaying backgrounds with thousands of colors instead being limtied to 32 colors for the entire screen background. It achieves this by changing ~16 colors of the background palette per scanline. The main tradeoffs are that it uses much of the Game Boy's available cpu processing per frame and requires more ROM space. The tile patterns, map, attributes and per-scanline palettes are pre-calculated using the PC based conversion tool.
+"Hi Color" on the Game Boy Color is a technique for displaying backgrounds with thousands of colors instead being limited to 32 colors for the entire screen background. It achieves this by changing ~16 colors of the background palette per scanline. The main tradeoffs are that it uses much of the Game Boy's available cpu processing per frame and requires more ROM space. The tile patterns, map, attributes and per-scanline palettes are pre-calculated using the PC based conversion tool.
 
 ![Hi Color example image on a Game Boy Color](/info/gbc_hicolor_test_pattern.jpg)
 ![Hi Color test pattern on a Game Boy Color](/info/gbc_hicolor_example_image.jpg)
 
-# Pallete ISR
-The new palette update ISR is contributed by Toxa
-https://github.com/untoxa
+# GBDK Example Palette ISR
+The new palette update ISR in the GBDK example is contributed by [Toxa](https://github.com/untoxa)
+
+# RGBDS Example
+RGBDS example modernization contributed by [ISSOtm](https://github.com/ISSOtm)
 
 # Example image
 Example image Pixel art originally by RodrixAP under Creative Commons Attribution 2.0 Generic (CC BY 2.0)
