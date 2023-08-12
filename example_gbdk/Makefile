@@ -44,7 +44,7 @@ HICOLORDIR  = $(RESDIR)/hicolor
 MKDIRS      = $(OBJDIR) $(BINDIR) # See bottom of Makefile for directory auto-creation
 
 
-BINS	    = $(BINDIR)/$(PROJECTNAME).gb
+BINS	    = $(BINDIR)/$(PROJECTNAME).gbc
 CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
 
