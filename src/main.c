@@ -178,6 +178,13 @@ static bool handle_pattern_help(char const * param) {
     return true;
 }
 
+static bool handle_precompile(char const * param) {
+    REJECT_PARAM("precompile");
+
+    opt_precompile = true;
+    return true;
+}
+
 static bool handle_right(char const * param, int * restrict i, char * argv[]) {
     GET_PARAM_OR_ERR("right", i, argv);
 
@@ -306,6 +313,7 @@ static bool handle_args(int argc, char * argv[static argc + 1]) {
                         // fallthrough
                     case 'p':
                         HANDLE_OPT("pattern-help", handle_pattern_help(param), exit(EXIT_SUCCESS));
+                        HANDLE_OPT("precompile", handle_precompile(param), break);
                         // fallthrough
                     case 'R':
                         HANDLE_OPT("right", handle_right(param, &i, argv), break);

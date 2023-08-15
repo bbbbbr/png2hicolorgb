@@ -4,15 +4,12 @@ INCLUDE "hardware.inc"
 SECTION "VBlank interrupt handler", ROM0[$40]
 
 	push af
-	push bc
 	push hl
 	jp hicolor_vbl
 
 SECTION "STAT interrupt handler", ROM0[$48]
 
 	push af
-	push bc
-	push de
 	push hl
 	jp hicolor_stat
 

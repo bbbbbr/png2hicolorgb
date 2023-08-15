@@ -1,6 +1,9 @@
 INCLUDE "hardware.inc"
 	rev_Check_hardware_inc 4.0
 
+def NB_PALETTES_PER_LINE equ 4 ; How many palettes are transferred per scanline.
+def NB_BYTES_PER_LINE equ NB_PALETTES_PER_LINE * 4 * 2 ; 4 colors/palette × 2 bytes/color
+
 SECTION "High-color routines", ROM0
 
 LoadHiColorPicture::
@@ -44,13 +47,13 @@ LoadHiColorPicture::
 	; And finally, register the pointer to the palette data.
 	ld a, e
 	ld [wPalettesAddr], a
-	ld [wPaletteCurPtr], a
 	ld a, d
 	ld [wPalettesAddr + 1], a
-	ld [wPaletteCurPtr + 1], a
 
 	; Enable the STAT interrupt.
-	ld a, STATF_MODE10
+	ld a, $FF
+	ldh [rLYC], a ; ...but don't trigger it until the next VBlank!
+	ld a, STATF_LYC
 	ldh [rSTAT], a
 
 	; Note that BCPS will only be set by the VBlank interrupt, but that's fine because the first
@@ -104,87 +107,84 @@ LoadHiColorPicture::
 ;***********************************************
 
 hicolor_vbl::
+	; Reset the address to which palettes will be written.
 	ld a, BCPSF_AUTOINC
 	ldh [rBCPS], a
-	; Perform one copy, as two are needed before the beginning of the frame,
-	; but the queued interrupt will only perform one.
-	ld a, [wPalettesAddr]
+
+	; Copy the initial palettes.
+	ld hl, .ret ; Return address.
+	push hl
+	ld hl, wPalettesAddr
+	ld a, [hli]
+	ld h, [hl]
 	ld l, a
-	ld a, [wPalettesAddr + 1]
-	ld h, a
-	ld bc, 16 << 8 | LOW(rBCPD)
-.copy
-	ld a, [hli]
-	ldh [c], a
-	ld a, [hli]
-	ldh [c], a
-	dec b
-	jr nz, .copy
+	push hl ; Where to jump to.
 
 	; Write the pointer the interrupts will resume from.
-	ld a, l
+	add a, 8 * 4 * 2 * 2 + 1 ; 8 palettes × 4 colors/palette × 2 bytes/palette × `ld [hl], <byte>` + `ret`
 	ld [wPaletteCurPtr], a
-	ld a, h
+	ld a, [wPalettesAddr + 1]
+	adc a, 0
 	ld [wPaletteCurPtr + 1], a
 
-	; Note that a Mode 2 interrupt is queued at the beginning of scanline $90!
-	; It will copy the second half of the palettes in time for the first scanline.
+	ld hl, rBCPD
+	ret ; Jump to the palette code.
+.ret
+	xor a ; TODO
+	ldh [rLYC], a
+
 	pop hl
-	pop bc
 	pop af
 	reti
 
 
 hicolor_stat::
-	ld [wSPBackup], sp ; Save SP so we can return to normalcy later.
+	ldh a, [rIE]
+	ldh [$FFE0], a ; TODO: temporary
+	ld a, IEF_STAT
+	ldh [rIE], a
+	ld a, STATF_MODE00
+	ldh [rSTAT], a
+	
+.loop
+	ld hl, .ret
+	push hl
 
-	; Point SP to the palette data.
-	ld sp, wPaletteCurPtr
-	pop hl
-	ld sp, hl
+	; Read the current palette read pointer.
+	ld hl, wPaletteCurPtr
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	push hl ; Where the `ret` will jump to.
 
-	pop de ; Read one color.
-	pop bc ; Read a second one.
+	;ld a, [wPaletteCurPtr] (already loaded)
+	add a, 1 + NB_BYTES_PER_LINE * 2 + 1
+	ld [wPaletteCurPtr], a
+	ld a, [wPaletteCurPtr + 1]
+	adc a, 0
+	ld [wPaletteCurPtr + 1], a
 
-	ld hl, rSTAT
-.waitBlank
-	bit 1, [hl] ; Wait for HBlank *or* VBlank.
-	jr nz, .waitBlank ; ; Write 32 palette bytes (16 colors, which is 4 palettes)
+	ld hl, rBCPD
+	ret
+.ret
+	xor a
+	ldh [rIF], a
+	ldh a, [rLY]
+	cp $8F
+	jr c, .loop
 
-	ld l, LOW(rBCPD) ; hl = rBCPD
-	; Write the first color.
-	ld [hl], e
-	ld [hl], d
-	; Write the second color.
-	ld [hl], c
-	ld [hl], b
-	; Write the rest.
-REPT 16 - 2 ; 16 colors, minus the two already written above.
-	pop de ; One color is two bytes.
-	ld [hl], e
-	ld [hl], d
-ENDR
-
-	; Save the read pointer for the next scanline.
-	ld [wPaletteCurPtr], sp
-
-	; Restore SP.
-	ld sp, wSPBackup
-	pop hl
-	ld sp, hl
+	ld a, STATF_LYC
+	ldh [rSTAT], a
+	ldh a, [$FFE0]
+	ldh [rIE], a
 
 	; Clean up and return.
 	pop hl
-	pop de
-	pop bc
 	pop af
 	reti
 
 
 SECTION "Hi-Color variables", WRAM0
-
-; Temporary storage for SP while the STAT handler is running.
-wSPBackup: dw
 
 ; Base address where the palette data lives.
 wPalettesAddr: dw

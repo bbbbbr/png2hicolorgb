@@ -19,6 +19,7 @@ extern bool opt_c_file_output;
 #define BANK_NUM_MAX   511
 extern int  opt_bank_num;
 
+extern bool opt_precompile;
 
 #endif
 

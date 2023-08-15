@@ -1,4 +1,5 @@
 
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -479,13 +480,23 @@ static void ExportPalettes(const char * fname_base)
     strcat(filename, ".pal");
     VERBOSE("Writing Palette to: %s\n", filename);
 
-    int outbuf_sz_pals = (((y_region_count_both_sides) * 4 * 4 * 2) + 1);
+    // Each "region" contains 4 palettes × 4 colors/palette × 2 bytes/color.
+    size_t pal_data_size = y_region_count_both_sides * 4 * 4 * 2;
+    if (opt_precompile) {
+        // Each byte will be doubled (`ld [hl], <byte>`), plus one `ret` per "region".
+        pal_data_size = pal_data_size * 2 + y_region_count_both_sides * 4;
+    }
+    size_t outbuf_sz_pals = pal_data_size + 1;
     uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
 
 
     for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
     {
+        if (opt_precompile && i >= 2) {
+            *p_buf++ = 0x76; // halt
+        }
+
         for (j = 0; j < 4; j++) // Each palette in the set
         {
             for(k=0; k<4;k++) // Each color in the palette
@@ -498,9 +509,19 @@ static void ExportPalettes(const char * fname_base)
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
 
                 // 2 bytes per color
+                if (opt_precompile) {
+                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                }
                 *p_buf++ = (u8)(v & 255);
+                if (opt_precompile) {
+                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                }
                 *p_buf++ = (u8)(v / 256);
             }
+        }
+
+        if (opt_precompile && i >= 1) {
+            *p_buf++ = 0xC9; // `ret`
         }
     }
 
