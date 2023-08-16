@@ -155,7 +155,6 @@ hicolor_stat::
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
-	push hl ; Where the `ret` will jump to.
 
 	;ld a, [wPaletteCurPtr] (already loaded)
 	add a, 1 + NB_BYTES_PER_LINE * 2 + 1
@@ -164,6 +163,17 @@ hicolor_stat::
 	adc a, 0
 	ld [wPaletteCurPtr + 1], a
 
+	; "Preload" the first four bytes.
+	ld a, [hli]
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	ld a, [hli]
+	ld d, a
+	ld a, [hli]
+	ld e, a
+
+	push hl ; Where the `ret` will jump to.
 	ld hl, rBCPD
 	ret
 .ret
@@ -180,6 +190,8 @@ hicolor_stat::
 
 	; Clean up and return.
 	pop hl
+	pop de
+	pop bc
 	pop af
 	reti
 
