@@ -839,6 +839,10 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
 
                     for(y2=0;y2<2;y2++)
                     {
+                        // Skip case where y_line would evaluate to -1 to avoid unsigned wraparound)
+                        // (scanline 0, left side of the image where 80 x 2 pixel box goes from scanline -1 to 0)
+                        if (y_offset > ((y*2) + y2)) continue;
+
                         // Skip if Y line is outside image borders (prevents buffer overflow)
                         // (Left side calcs hang off top and bottom of screen
                         // due to Left/Right palette update interleaving)
@@ -887,6 +891,10 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                     {
                         for(x2=0;x2<tw;x2++)
                         {
+                            // Skip case where y_line would evaluate to -1 to avoid unsigned wraparound)
+                            // (scanline 0, left side of the image where 80 x 2 pixel box goes from scanline -1 to 0)
+                            if (y_offset > ((y*2) + y2)) continue;
+
                             // Skip if Y line is outside image borders (prevents buffer overflow)
                             // since Left side calcs hang off top and bottom of image/screen
                             unsigned int y_line = (y*2+y2-y_offset);
