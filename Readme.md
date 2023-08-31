@@ -25,13 +25,13 @@ https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 - Added support for images of various heights (8-256 pixels) instead of fixed 144 pixels high
 - Added selectable map tile index mode
 - Added tile deduplication (including v/h flipped, only beneficial for some images)
+- Added precompiled palette loading output (by [ISSOtm](https://github.com/ISSOtm))
 - Fixed last scanline tile and palette update missing for Left side of screen
 - Removed the "original" mode quantizer and conversion type (Jeff Frohwein/etc, method 0) due to unclear source license status. It was faster, but the other methods tend to have better output.
 
 ```
 png2hicolorgb input_image.png [options]
 version 1.4.1: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
- ISR
 Convert an image to Game Boy Hi-Color format
 
 Options
@@ -49,6 +49,7 @@ Options
 -R=N       : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
 --vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)
 --nodedupe : Turn off tile pattern deduplication
+--precompiled : Export Palette data as pre-compiled executable loading code
 
 Example 1: "png2hicolorgb myimage.png"
 Example 2: "png2hicolorgb myimage.png --csource -o=my_output_filename"
