@@ -1,4 +1,5 @@
 
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -163,6 +164,7 @@ static void PrepareAttributes(void);
 static void DedupeTileset(void);
 
 static void ExportPalettes(const char * fname_base);
+static void ExportPalettesPrecompiled(const char * fname_base);
 static void ExportTileSet(const char * fname_base);
 static void ExportMap(const char * fname_base);
 static void ExportMapAttributes(const char * fname_base);
@@ -305,7 +307,11 @@ static void hicolor_save(const char * fname_base) {
     }
 
     ExportTileSet(fname_base);
-    ExportPalettes(fname_base);
+    if (opt_get_precompiled_palette())
+        ExportPalettesPrecompiled(fname_base);
+    else
+        ExportPalettes(fname_base);
+
     ExportMap(fname_base);
     ExportMapAttributes(fname_base);
 
@@ -502,6 +508,66 @@ static void ExportPalettes(const char * fname_base)
                 *p_buf++ = (u8)(v / 256);
             }
         }
+    }
+
+    // TODO: What is this and why? :)
+    *p_buf++ = 0x2d;
+
+    if (!file_write_from_buffer(filename, output_buf, outbuf_sz_pals))
+        set_exit_error();
+
+}
+
+
+static void ExportPalettesPrecompiled(const char * fname_base)
+{
+    char filename[MAX_PATH * 2];
+    unsigned int      i, j, k;
+    s32      r,g,b,v;
+
+    strcpy(filename, fname_base);
+    strcat(filename, ".pal");
+    VERBOSE("Writing Pre-compiled Palette to: %s\n", filename);
+
+    // Each "region" contains 4 palettes × 4 colors/palette × 2 bytes/color.
+    size_t pal_data_size = y_region_count_both_sides * 4 * 4 * 2;
+    // In pre-compiled mode each byte will be doubled (`ld [hl], <byte>`), plus one `ret` per "region".
+    pal_data_size = pal_data_size * 2 + y_region_count_both_sides * 4;
+    // TODO: add for stray mystery byte, test deleting this
+    size_t outbuf_sz_pals = pal_data_size + 1;
+
+    uint8_t output_buf[outbuf_sz_pals];
+    uint8_t * p_buf = output_buf;
+
+
+    for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
+    {
+        if (i >= 2)
+            *p_buf++ = SM83_OPCODE_HALT;
+
+        for (j = 0; j < 4; j++) // Each palette in the set
+        {
+            for(k=0; k<4;k++) // Each color in the palette
+            {
+                r = IdealPal[(i%2)*4+j][i/2][k][0];
+                g = IdealPal[(i%2)*4+j][i/2][k][1];
+                b = IdealPal[(i%2)*4+j][i/2][k][2];
+
+                // TODO: Converting to BGR555 probably
+                v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
+
+                // 2 bytes per color
+                //   2 x ld [hl], <imm8>
+                *p_buf++ = SM83_OPCODE_LD_HL_IMM8;
+                *p_buf++ = (u8)(v & 255);
+
+                *p_buf++ = SM83_OPCODE_LD_HL_IMM8;
+                *p_buf++ = (u8)(v / 256);
+            }
+        }
+
+        if (i >= 1)
+            *p_buf++ = SM83_OPCODE_RET;
     }
 
     // TODO: What is this and why? :)

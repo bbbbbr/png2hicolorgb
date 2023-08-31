@@ -24,7 +24,7 @@ static void cleanup(void);
 static void display_help(void);
 static int  handle_args(int argc, char * argv[]);
 #ifdef DRAG_AND_DROP_MODE
-static void set_drag_and_drop_mode_defaults(void);
+    static void set_drag_and_drop_mode_defaults(void);
 #endif
 
 image_data src_image;
@@ -99,7 +99,7 @@ int main( int argc, char *argv[] )  {
 
     #ifdef DRAG_AND_DROP_MODE
         // Wait for input to keep the console window open after processing
-        log_standard("\n\nPress Any Key to Continue\n");
+        LOG("\n\nPress Any Key to Continue\n");
         getchar();
     #endif
 
@@ -130,6 +130,7 @@ static void display_help(void) {
         "-R=N       : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
         "--vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)\n"
         "--nodedupe : Turn off tile pattern deduplication\n"
+        "--precompiled : Export Palette data as pre-compiled executable loading code\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png --csource -o=my_output_filename\"\n"
@@ -211,7 +212,7 @@ static int handle_args(int argc, char * argv[]) {
             if (i < (argc -1))
                 i++; // Move to next argument if one is available
             else {
-                log_standard("Error: -o specified but filename is missing\n");
+                LOG("Error: -o specified but filename is missing\n");
                 show_help_and_exit = true;
                 return false; // Abort
             }
@@ -241,6 +242,9 @@ static int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "--nodedupe") == argv[i]) {
             opt_set_tile_dedupe(false);
+
+        } else if (strstr(argv[i], "--precompiled") == argv[i]) {
+            opt_set_precompiled_palette(true);
 
         } else if (argv[i][0] == '-') {
             ERR("Unknown argument: %s\n\n", argv[i]);
