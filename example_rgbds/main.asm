@@ -10,6 +10,8 @@ SECTION "VBlank interrupt handler", ROM0[$40]
 SECTION "STAT interrupt handler", ROM0[$48]
 
 	push af
+	push bc
+	push de
 	push hl
 	jp hicolor_stat
 

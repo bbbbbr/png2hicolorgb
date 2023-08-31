@@ -54,7 +54,10 @@ enum conversion_types {
 #define CONV_Y_SHIFT_NO      0
 
 #define SM83_OPCODE_HALT        0x76u
-#define SM83_OPCODE_LD_HL_IMM8  0x36u
+#define SM83_OPCODE_LD_HL_B     0x70u
+#define SM83_OPCODE_LD_HL_C     0x71u
+#define SM83_OPCODE_LD_HL_D     0x72u
+#define SM83_OPCODE_LD_HL_E     0x73u
 #define SM83_OPCODE_RET         0xC9u
 
 #define PAL_REGION_HEIGHT_PX 2

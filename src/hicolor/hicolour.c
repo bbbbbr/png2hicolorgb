@@ -542,13 +542,20 @@ static void ExportPalettesPrecompiled(const char * fname_base)
 
     for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
     {
-        if (i >= 2)
-            *p_buf++ = SM83_OPCODE_HALT;
-
         for (j = 0; j < 4; j++) // Each palette in the set
         {
             for(k=0; k<4;k++) // Each color in the palette
             {
+                // Precompiled mode has a "header" after the first two colours, except for the first
+                // two scanlines (written during VBlank).
+                if (i >= 2 && j == 0 && k == 2) {
+                    *p_buf++ = SM83_OPCODE_HALT;
+                    *p_buf++ = SM83_OPCODE_LD_HL_B;
+                    *p_buf++ = SM83_OPCODE_LD_HL_C;
+                    *p_buf++ = SM83_OPCODE_LD_HL_D;
+                    *p_buf++ = SM83_OPCODE_LD_HL_E;
+                }
+
                 r = IdealPal[(i%2)*4+j][i/2][k][0];
                 g = IdealPal[(i%2)*4+j][i/2][k][1];
                 b = IdealPal[(i%2)*4+j][i/2][k][2];
@@ -557,11 +564,13 @@ static void ExportPalettesPrecompiled(const char * fname_base)
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
 
                 // 2 bytes per color
-                //   2 x ld [hl], <imm8>
-                *p_buf++ = SM83_OPCODE_LD_HL_IMM8;
+                if (i < 2 || j > 0 || k >= 2) {
+                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                }
                 *p_buf++ = (u8)(v & 255);
-
-                *p_buf++ = SM83_OPCODE_LD_HL_IMM8;
+                if (i < 2 || j > 0 || k >= 2) {
+                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                }
                 *p_buf++ = (u8)(v / 256);
             }
         }
