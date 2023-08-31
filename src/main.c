@@ -108,7 +108,7 @@ int main( int argc, char *argv[] )  {
 
 
 static void display_help(void) {
-    log_standard(
+    LOG(
         "\n"
         "png2hicolorgb input_image.png [options]\n"
         VERSION": bbbbbr. Based on Glen Cook's Windows GUI \"hicolour.exe\" 1.2\n"
@@ -179,23 +179,23 @@ static int handle_args(int argc, char * argv[]) {
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
         } else if (strstr(argv[i], "-p") == argv[i]) {
-            log_standard(HELP_CONV_PATTERN_STR);
+            LOG(HELP_CONV_PATTERN_STR);
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
 
         } else if (strstr(argv[i], "-vD") == argv[i]) {
-            log_set_level(OUTPUT_LEVEL_DEBUG);
+            set_log_level(OUTPUT_LEVEL_DEBUG);
         } else if (strstr(argv[i], "-vE") == argv[i]) {
-            log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
+            set_log_level(OUTPUT_LEVEL_ONLY_ERRORS);
         } else if (strstr(argv[i], "-vQ") == argv[i]) {
-            log_set_level(OUTPUT_LEVEL_QUIET);
+            set_log_level(OUTPUT_LEVEL_ONLY_ERRORS);
         } else if (strstr(argv[i], "-v") == argv[i]) {
-            log_set_level(OUTPUT_LEVEL_VERBOSE);
+            set_log_level(OUTPUT_LEVEL_VERBOSE);
 
         } else if (strstr(argv[i], "--type=") == argv[i]) {
             uint8_t new_type = strtol(argv[i] + strlen("--type="), NULL, 10);
             if ((new_type < CONV_TYPE_MIN) || (new_type > CONV_TYPE_MAX)) {
-                log_standard("Error: --type specified with invalid conversion setting: %d\n", new_type);
+                LOG("Error: --type specified with invalid conversion setting: %d\n", new_type);
                 display_help();
                 show_help_and_exit = true;
                 return false; // Abort
@@ -217,8 +217,8 @@ static int handle_args(int argc, char * argv[]) {
             }
 
             // Require colon and filename to be present
-            if (*argv[i] == '-')
-                log_standard("Warning: -o specified but filename has dash and looks like an option argument. Usage: -o my_base_output_filename\n");
+             if (*argv[i] == '-')
+                LOG("Warning: -o specified but filename has dash and looks like an option argument. Usage: -o my_base_output_filename\n");
             snprintf(opt_filename_out, sizeof(opt_filename_out), "%s", argv[i]);
 
         // } else if (strstr(argv[i], "--keepext") == argv[i]) {
@@ -230,7 +230,7 @@ static int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "--bank=") == argv[i]) {
             opt_set_bank_num( strtol(argv[i] + strlen("--bank="), NULL, 10) );
             if ((opt_get_bank_num() < BANK_NUM_MIN) || (opt_get_bank_num() > BANK_NUM_MAX)) {
-                log_standard("Error: Invalid bank number specified with --bank=%d\n", opt_get_bank_num());
+                LOG("Error: Invalid bank number specified with --bank=%d\n", opt_get_bank_num());
                 display_help();
                 show_help_and_exit = true;
                 return false; // Abort
@@ -243,7 +243,7 @@ static int handle_args(int argc, char * argv[]) {
             opt_set_tile_dedupe(false);
 
         } else if (argv[i][0] == '-') {
-            log_error("Unknown argument: %s\n\n", argv[i]);
+            ERR("Unknown argument: %s\n\n", argv[i]);
             display_help();
             return false;
         }

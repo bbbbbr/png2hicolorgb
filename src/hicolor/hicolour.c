@@ -176,7 +176,7 @@ void hicolor_init(void) {
 }
 
 static void hicolor_vars_prep(image_data * p_loaded_image) {
-    log_debug("hicolor_vars_prep()\n");
+    DBG("hicolor_vars_prep()\n");
 
     image_height                = p_loaded_image->height;
     image_y_min                 = 0;
@@ -208,21 +208,21 @@ static void hicolor_vars_prep(image_data * p_loaded_image) {
 void hicolor_set_convert_left_pattern(uint8_t new_value) {
     // IDC_CONVERTLEFT
     LConversion = new_value;
-    log_verbose("HiColor: Left pattern set to %d\n", new_value);
+    VERBOSE("HiColor: Left pattern set to %d\n", new_value);
 }
 
 
 void hicolor_set_convert_right_pattern(uint8_t new_value) {
     // IDC_CONVERTRIGHT
     RConversion = new_value;
-    log_verbose("HiColor: Right pattern set to %d\n", new_value);
+    VERBOSE("HiColor: Right pattern set to %d\n", new_value);
 }
 
 
 void hicolor_set_type(uint8_t new_value) {
     // IDC_CONVERTTYPE
     ConvertType = new_value;
-    log_verbose("HiColor: Convert type set to %d\n", new_value);
+    VERBOSE("HiColor: Convert type set to %d\n", new_value);
 }
 
 
@@ -230,7 +230,7 @@ void hicolor_set_type(uint8_t new_value) {
 
 // Equivalent of former file loading
 static void hicolor_image_import(image_data * p_loaded_image) {
-    log_debug("hicolor_image_import()\n");
+    DBG("hicolor_image_import()\n");
 
     // TODO: input guarding
     // TODO: deduplicate some of the array copying around
@@ -268,7 +268,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 // TODO: fix
 // TODO: Operates on RGB data in pic[] copied from RGB data in pic2
 static void hicolor_convert(void) {
-    log_debug("hicolor_convert()\n");
+    DBG("hicolor_convert()\n");
 
     for(unsigned int x=0; x<160; x++)
     {
@@ -294,7 +294,7 @@ static void hicolor_save(const char * fname_base) {
     // Default tile count to non-deduplicated number
     int tile_count = y_height_in_tiles * (160 / TILE_WIDTH_PX);
 
-    log_debug("hicolor_save()\n");
+    DBG("hicolor_save()\n");
     PrepareTileSet();
     PrepareMap();
     PrepareAttributes();
@@ -317,7 +317,7 @@ static void hicolor_save(const char * fname_base) {
 
 // Currently expects width x height x 3(RGB888)
 void hicolor_process_image(image_data * p_loaded_image, const char * fname_base) {
-    log_debug("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
+    DBG("hicolor_process_image(), fname_base: \"%s\"\n", fname_base);
 
     hicolor_vars_prep(p_loaded_image);
     hicolor_image_import(p_loaded_image);
@@ -360,7 +360,7 @@ static void DedupeTileset(void)
             MapAttributes[mapx][mapy] = (MapAttributes[mapx][mapy] & CGB_ATTR_PALLETES_ONLY) | new_attribs;
         }
     }
-    log_verbose("DedupeTileset(): Reduced tiles from %d (%d bytes) to %d (%d bytes) = %d bytes saved. %%%d of original size\n",
+    VERBOSE("DedupeTileset(): Reduced tiles from %d (%d bytes) to %d (%d bytes) = %d bytes saved. %%%d of original size\n",
                 map_tile_id + 1, (map_tile_id + 1) * TILE_SZ, TileCountDeduped, TileCountDeduped * TILE_SZ,
                 ((map_tile_id + 1) * TILE_SZ) - (TileCountDeduped * TILE_SZ), (TileCountDeduped * 100) / (map_tile_id + 1));
 }
@@ -453,7 +453,7 @@ static void ExportTileSet(const char * fname_base)
 
     strcpy(filename, fname_base);
     strcat(filename, ".til");
-    log_verbose("Writing Tile Patterns to: %s\n", filename);
+    VERBOSE("Writing Tile Patterns to: %s\n", filename);
 
     if (opt_get_tile_dedupe()) {
 
@@ -477,7 +477,7 @@ static void ExportPalettes(const char * fname_base)
 
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
-    log_verbose("Writing Palette to: %s\n", filename);
+    VERBOSE("Writing Palette to: %s\n", filename);
 
     int outbuf_sz_pals = (((y_region_count_both_sides) * 4 * 4 * 2) + 1);
     uint8_t output_buf[outbuf_sz_pals];
@@ -522,7 +522,7 @@ static void ExportMap(const char * fname_base)
 
     strcpy(filename, fname_base);
     strcat(filename, ".map");
-    log_verbose("Writing Tile Map to: %s\n", filename);
+    VERBOSE("Writing Tile Map to: %s\n", filename);
 
     int outbuf_sz_map = (20 * y_height_in_tiles);
     uint8_t output_buf_map[outbuf_sz_map];
@@ -553,7 +553,7 @@ static void ExportMapAttributes(const char * fname_base)
 
     strcpy(filename, fname_base);
     strcat(filename, ".atr");
-    log_verbose("Writing Attribute Map to: %s\n", filename);
+    VERBOSE("Writing Attribute Map to: %s\n", filename);
 
     int outbuf_sz_map = (20 * y_height_in_tiles);
     uint8_t output_buf_map[outbuf_sz_map];
@@ -666,7 +666,7 @@ u8    SplitData[80][4]=
 
 unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, int Height)
 {
-    log_debug("ImageRating()\n");
+    DBG("ImageRating()\n");
     unsigned int    tot;
     int                x,y;
     unsigned int    accum=0;
@@ -691,7 +691,7 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
 // TODO: rename to something that aligns with other convert functions
 void ConvertToHiColor(int ConvertType)
 {
-    log_debug("ConvertToHiColor()\n");
+    DBG("ConvertToHiColor()\n");
     int        res;
     unsigned int        x,y;
     int        StartSplit=0;
@@ -787,7 +787,7 @@ void ConvertToHiColor(int ConvertType)
             raw[1][x][y][2] = GBView.rgbBlue;
         }
     }
-    log_progress("\n");
+    VERBOSE("\n");
 }
 
 
@@ -799,7 +799,7 @@ void ConvertToHiColor(int ConvertType)
 
 int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY, unsigned int Height, unsigned int StartJ, unsigned int FinishJ, int ConvertType)
 {
-    log_debug("ConvertRegions()\n");
+    DBG("ConvertRegions()\n");
     u32        width,x1,ts,tw,y2,x2,y_offset;
     unsigned int        x,y;
     unsigned int        i,j;
@@ -830,7 +830,7 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
 
             for(y=StartY*4;y<(StartY+Height)*4;y++)
             {
-                log_progress(".");
+                VERBOSE(".");
 
                 for(x1=0;x1<4;x1++)
                 {
