@@ -43,17 +43,19 @@ Options
 --type=N   : Set conversion type where N is one of below 
               1: Median Cut - No Dither (*Default*)
               2: Median Cut - With Dither
-              3: Wu Quantiser
+              3: Wu Quantiser (best quality)
 -p         : Show screen attribute pattern options (no processing)
--L=N       : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)
--R=N       : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)
+-L=N       : Set Left  side of screen palette arrangement where N is name listed below or decimal entry
+-R=N       : Set Right side of screen palette arrangement where N is name listed below or decimal entry
+             Named options for N: "adaptive-fast", "adaptive-medium", "adaptive-best" (-p for full options) 
+--best     : Use highest quality conversion settings (--type=3 -L=adaptive-best -R=adaptive-best)
 --vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)
 --nodedupe : Turn off tile pattern deduplication
 --precompiled : Export Palette data as pre-compiled executable loading code
 
 Example 1: "png2hicolorgb myimage.png"
 Example 2: "png2hicolorgb myimage.png --csource -o=my_output_filename"
-* Default settings provide good results. Better quality but slower: "--type=3 -L=2 -R=2"
+* Default settings provide good results. Better quality but slower: "--type=3 -L=adaptive-best -R=adaptive-best"
 
 Historical credits and info:
    Original Concept : Icarus Productions

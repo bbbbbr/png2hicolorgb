@@ -19,10 +19,23 @@
 
 #define VERSION "version 1.4.1"
 
+#define HELP_HISTORICAL_CREDITS_STR \
+        "Historical credits and info:\n" \
+        "   Original Concept : Icarus Productions\n" \
+        "   Original Code : Jeff Frohwein\n" \
+        "   Full Screen Modification : Anon\n" \
+        "   Adaptive Code : Glen Cook\n" \
+        "   Windows Interface : Glen Cook\n" \
+        "   Additional Windows Programming : Rob Jones\n" \
+        "   Original Quantiser Code : Benny\n" \
+        "   Quantiser Conversion : Glen Cook\n" \
+        "\n"
+
 static void init(void);
 static void cleanup(void);
 static void display_help(void);
 static int  handle_args(int argc, char * argv[]);
+static bool handle_args_L_R_patterns(const char * str_opt_side, const char * str_value);
 #ifdef DRAG_AND_DROP_MODE
     static void set_drag_and_drop_mode_defaults(void);
 #endif
@@ -32,7 +45,8 @@ char filename_in[MAX_STR_LEN] = {'\0'};
 char opt_filename_out[MAX_STR_LEN] = "";
 // bool opt_strip_output_filename_ext = true;
 
-int  show_help_and_exit = false;
+bool show_help_and_exit = false;
+bool show_full_credits = false;
 
 
 static void init(void) {
@@ -124,29 +138,24 @@ static void display_help(void) {
         "--type=N   : Set conversion type where N is one of below \n"
         "              1: Median Cut - No Dither (*Default*)\n"
         "              2: Median Cut - With Dither\n"
-        "              3: Wu Quantiser\n"
+        "              3: Wu Quantiser (best quality)\n"
         "-p         : Show screen attribute pattern options (no processing)\n"
-        "-L=N       : Set Left  screen attribute pattern where N is decimal entry (-p to show patterns)\n"
-        "-R=N       : Set Right screen attribute pattern where N is decimal entry (-p to show patterns)\n"
+        "-L=N       : Set Left  side of screen palette arrangement where N is name listed below or decimal entry\n"
+        "-R=N       : Set Right side of screen palette arrangement where N is name listed below or decimal entry\n"
+        "             Named options for N: \"adaptive-fast\", \"adaptive-medium\", \"adaptive-best\" (-p for full options) \n"
+        "--best     : Use highest quality conversion settings (--type=3 -L=adaptive-best -R=adaptive-best)\n"
         "--vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)\n"
         "--nodedupe : Turn off tile pattern deduplication\n"
         "--precompiled : Export Palette data as pre-compiled executable loading code\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png --csource -o=my_output_filename\"\n"
-        "* Default settings provide good results. Better quality but slower: \"--type=3 -L=2 -R=2\"\n"
-        "\n"
-        "Historical credits and info:\n"
-        "   Original Concept : Icarus Productions\n"
-        "   Original Code : Jeff Frohwein\n"
-        "   Full Screen Modification : Anon\n"
-        "   Adaptive Code : Glen Cook\n"
-        "   Windows Interface : Glen Cook\n"
-        "   Additional Windows Programming : Rob Jones\n"
-        "   Original Quantiser Code : Benny\n"
-        "   Quantiser Conversion : Glen Cook\n"
+        "* Default settings provide good results. Better quality but slower: \"--type=3 -L=adaptive-best -R=adaptive-best\"\n"
         "\n"
    );
+
+    if (show_full_credits)
+        LOG(HELP_HISTORICAL_CREDITS_STR);
 }
 
 
@@ -157,6 +166,7 @@ static void set_drag_and_drop_mode_defaults(void) {
     // Set some options here
 }
 #endif
+
 
 
 static int handle_args(int argc, char * argv[]) {
@@ -176,6 +186,7 @@ static int handle_args(int argc, char * argv[]) {
     for (i = 1; i <= (argc -1); i++ ) {
 
         if ((strstr(argv[i], "-h") == argv[i]) || (strstr(argv[i], "-?") == argv[i])) {
+            show_full_credits  = true;
             display_help();
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
@@ -204,9 +215,22 @@ static int handle_args(int argc, char * argv[]) {
             else
                 hicolor_set_type(new_type);
         } else if (strstr(argv[i], "-L=") == argv[i]) {
-            hicolor_set_convert_left_pattern( strtol(argv[i] + strlen("-L="), NULL, 10));
+            if (!handle_args_L_R_patterns((const char *)"-L=", argv[i] + strlen("-L="))) {
+                show_help_and_exit = true;
+                return false; // Abort
+            }
+
         } else if (strstr(argv[i], "-R=") == argv[i]) {
-            hicolor_set_convert_right_pattern( strtol(argv[i] + strlen("-R="), NULL, 10));
+            if (!handle_args_L_R_patterns((const char *)"-R=", argv[i] + strlen("-R="))) {
+                show_help_and_exit = true;
+                return false; // Abort
+            }
+
+        } else if (strstr(argv[i], "--best") == argv[i]) {
+            hicolor_set_type(CONV_TYPE_WU);
+            hicolor_set_convert_left_pattern(HICOLOR_PATTERN_ADAPTIVE_BEST);
+            hicolor_set_convert_right_pattern(HICOLOR_PATTERN_ADAPTIVE_BEST);
+
 
         } else if (strstr(argv[i], "-o") == argv[i]) {
             if (i < (argc -1))
@@ -257,3 +281,35 @@ static int handle_args(int argc, char * argv[]) {
     return true;
 }
 
+
+static bool handle_args_L_R_patterns(const char * str_opt_side, const char * str_value) {
+
+    if (*str_value == '\0') {
+        ERR("Missing value for %s argument\n", str_opt_side);
+        return false;
+    }
+
+    unsigned int pattern_num = hicolor_get_pattern_by_name(str_value);
+
+    if (pattern_num == HICOLOR_PATTERN_NOT_FOUND_HAS_CHARS) {
+        ERR("Invalid value for %s argument: %s\n", str_opt_side, str_value);
+        return false;
+    }
+    else if (pattern_num == HICOLOR_PATTERN_NOT_FOUND) {
+        // Try numeric conversion on option instead named conversion
+        pattern_num = (unsigned int)strtoul(str_value, NULL, 10);
+    }
+
+    if (pattern_num > HICOLOR_PATTERN_OPT_MAX) {
+        ERR("Invalid value for %s argument: %s\n", str_opt_side, str_value);
+        return false;
+    }
+
+    // Got a valid option value, now apply it
+    if (strstr(str_opt_side, "-L=") == str_opt_side)
+        hicolor_set_convert_left_pattern(pattern_num);
+    else
+        hicolor_set_convert_right_pattern(pattern_num);
+
+    return true;
+}

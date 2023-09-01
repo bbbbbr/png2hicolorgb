@@ -27,7 +27,7 @@ LCCFLAGS += -autobank -Wb-v -Wb-ext=.rel # Auto-bank packing
 PNG2HICOLORGB = ../bin/png2hicolorgb
 # Use conversion method type 1, Faster Adaptive attribute sizing for Left / Right side of screen, C source output
 # Bank 255 for auto-banking
-HICOLOR_FLAGS = --type=1 -L=1 -R=1 --csource --bank=255
+HICOLOR_FLAGS = --type=1 -L=adaptive-medium -R=adaptive-medium --csource --bank=255
 # Add the object dir as an include dir since that's
 # where the converted png source files will get generated
 LCCFLAGS += -I$(OBJDIR) -I$(SRCDIR)

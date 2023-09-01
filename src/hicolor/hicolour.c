@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -144,6 +145,12 @@ static      uint8_t *pBitsdest = Bitsdest;
 #define MAX_CONVERSION_TYPES    83
 #define MAX_QUANTISER_TYPES     4
 
+pattern_entry named_patterns[] = {
+    {.num = HICOLOR_PATTERN_ADAPTIVE_FAST, .name="adaptive-fast"},
+    {.num = HICOLOR_PATTERN_ADAPTIVE_MED, .name="adaptive-medium"},
+    {.num = HICOLOR_PATTERN_ADAPTIVE_BEST, .name="adaptive-best"}
+};
+
 static unsigned int image_y_min;
 static unsigned int image_y_max;
 static unsigned int image_height;
@@ -172,10 +179,11 @@ static void ExportMapAttributes(const char * fname_base);
 
 void hicolor_init(void) {
     // Defaults
-    LConversion = 3; // Default Conversion (Fixed 3-2-3-2) Left Screen
-    RConversion = 3; // Default Conversion (Fixed 3-2-3-2) Righ Screen
-    ConvertType = 1; // Normal default is 1 ("Median cut - no dither")
+    LConversion = HICOLOR_PATTERN_ADAPTIVE_MED; // Default Conversion adaptive-medium Left Screen
+    RConversion = HICOLOR_PATTERN_ADAPTIVE_MED; // Default Conversion adaptive-medium Righ Screen
+    ConvertType = CONV_TYPE_MED_CUT_NO_DITHER; // Normal default is 1 ("Median cut - no dither")
 }
+
 
 static void hicolor_vars_prep(image_data * p_loaded_image) {
     DBG("hicolor_vars_prep()\n");
@@ -205,6 +213,34 @@ static void hicolor_vars_prep(image_data * p_loaded_image) {
     y_height_in_tiles_lr_rndup  =  (y_height_in_tiles_left);
 }
 
+
+// Look up user specified L/R pattern by name if possible
+unsigned int hicolor_get_pattern_by_name(const char * opt_str) {
+    char opt_str_lower[MAX_STR_LEN];
+    unsigned int c;
+
+    // Convert user input to lowercase first
+    for(c = 0; (opt_str[c] != '\0') && (c < MAX_STR_LEN); c++)
+        opt_str_lower[c] = tolower(opt_str[c]);
+    opt_str_lower[c] = '\0';
+
+    // Return if it matches any names in the named pattern list
+    for (c = 0; c < ARRAY_LEN(named_patterns); c++) {
+        if (strcmp(opt_str_lower, named_patterns[c].name) == 0)
+            return named_patterns[c].num;
+    }
+
+    // If there was no match, return if it contained any non-digit characters,
+    // meaning it should not later be converted as a raw numeric value for the option
+    while (*opt_str != '\0') {
+        if (isdigit(*opt_str) == 0) {
+            return HICOLOR_PATTERN_NOT_FOUND_HAS_CHARS;
+        }
+        opt_str++;
+    }
+
+    return HICOLOR_PATTERN_NOT_FOUND;
+}
 
 
 void hicolor_set_convert_left_pattern(uint8_t new_value) {
@@ -725,7 +761,7 @@ RGBQUAD translate(uint8_t rgb[3])
 
 // The higher the adaptive level, the more combinations of attributes are tested.
 
-u8    SplitData[80][4]=
+u8    SplitData[HICOLOR_PATTERN_FIXED_COUNT][4]=
 {
     {3,2,3,2},{2,3,2,3},{2,2,3,3},{2,3,3,2},{3,2,2,3},{3,3,2,2},{4,2,2,2},{2,2,2,4},{2,2,4,2},{2,4,2,2},{1,1,2,6},
     {1,1,3,5},{1,1,4,4},{1,1,5,3},{1,1,6,2},{1,2,1,6},{1,2,2,5},{1,2,3,4},{1,2,4,3},{1,2,5,2},{1,2,6,1},{1,3,1,5},
@@ -769,6 +805,10 @@ void ConvertToHiColor(int ConvertType)
     DBG("ConvertToHiColor()\n");
     int        res;
     unsigned int        x,y;
+    // TODO: Change "Adaptive Pattern" settings to be a separate variable so StartSplit doesn't have to be offset by -3
+    //       Just set these directly:
+    //       * StartSplit (first pattern to start checking with)
+    //       * NumSplit   (number of patterns to iterate through for testing, 1 = just use the one in StartSplit)
     int        StartSplit=0;
     int        NumSplit=1;
 
