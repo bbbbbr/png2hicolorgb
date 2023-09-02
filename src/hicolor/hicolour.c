@@ -601,11 +601,11 @@ static void ExportPalettesPrecompiled(const char * fname_base)
 
                 // 2 bytes per color
                 if (i < 2 || j > 0 || k >= 2) {
-                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                    *p_buf++ = SM83_OPCODE_LD_HL_IMM8; // ld [hl], <imm8>
                 }
                 *p_buf++ = (u8)(v & 255);
                 if (i < 2 || j > 0 || k >= 2) {
-                    *p_buf++ = 0x36; // `ld [hl], <imm8>`
+                    *p_buf++ = SM83_OPCODE_LD_HL_IMM8; // ld [hl], <imm8>
                 }
                 *p_buf++ = (u8)(v / 256);
             }

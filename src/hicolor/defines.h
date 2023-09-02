@@ -75,6 +75,7 @@ enum pattern_types {
 #define SM83_OPCODE_LD_HL_C     0x71u
 #define SM83_OPCODE_LD_HL_D     0x72u
 #define SM83_OPCODE_LD_HL_E     0x73u
+#define SM83_OPCODE_LD_HL_IMM8  0x36u
 #define SM83_OPCODE_RET         0xC9u
 
 #define PAL_REGION_HEIGHT_PX 2
