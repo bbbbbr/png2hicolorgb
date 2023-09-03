@@ -6,7 +6,6 @@
 
 // GBC HiColor images; header file names align with png file names
 #include "example_image.h"
-#include "test_pattern_tall.h"
 #include "test_pattern_short.h"
 
 
@@ -27,7 +26,6 @@ typedef struct far_ptr_t {
 
 // Array of pointers to the generated hicolor data structures
 const far_ptr_t hicolors[] = {
-    { BANK(test_pattern_tall),  &HICOLOR_VAR(test_pattern_tall) },
     { BANK(example_image),      &HICOLOR_VAR(example_image) },
     { BANK(test_pattern_short), &HICOLOR_VAR(test_pattern_short) }
 };

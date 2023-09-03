@@ -14,105 +14,139 @@ static uint8_t * p_hicolor_palettes;
 static uint8_t hicolor_palettes_bank;
 static uint8_t hicolor_last_scanline;
 
+static uint16_t hicolor_palettes_cur_addr;
+
 
 // ISR function which updates 4 CGB palettes per scanline
 // alternating between Palettes 0-3 and 4-7
 void hicolor_palette_isr(void) NONBANKED {
 __asm
-        ldh a, (__current_bank)     ; switch ROM bank
-        push af
-        ld a, (_hicolor_palettes_bank)
-        or a
-        jr z, 3$
-        ldh (__current_bank), a
-        ld (_rROMB0), a
-3$:
-        ld (_SP_SAVE), sp           ; save SP
+    PALETTES_PER_LINE       = #4 ; How many palettes are transferred per scanline
+    PAL_BYTES_PER_LINE      = #PALETTES_PER_LINE * #4 * #2 ; 4 colors/palette × 2 bytes/color
+    BYTES_TO_NEXT_PAL_LINE  = #PAL_BYTES_PER_LINE * #2 + #1 + #1 - #4 // + (halt + ret) - (4 pre-load bytes)
 
-        ld hl, #_p_hicolor_palettes ; load address of picture palettes buffer
-        ld a, (hl+)
-        ld d, (hl)
-        ld e, a
+    BYTES_TO_PAL_AFTER_VBLANK_PAL = #8 * #4 * #2 * #2 + #1; // 8 palettes × 4 colors/palette × 2 bytes/palette × `ld [hl], <byte>` + `ret`
 
-        ldh a, (_SCY_REG)
-        swap a
-        ld l, a
-        and #0x0f
-        ld h, a
-        ld a, #0xf0
-        and l
-        ld l, a
-        add hl, hl
-        add hl, de                  ; offset address by SCY * (4 * 4 * 2)
-        ld sp, hl
+    ldh a, (__current_bank)     ; switch ROM bank
+    push af
+    ld a, (_hicolor_palettes_bank)
+    or a
+    jr z, ._hicol__skip_set_bank_if_zero
+    ldh (__current_bank), a
+    ld (_rROMB0), a
+._hicol__skip_set_bank_if_zero:
 
-        rlca                        ; compensate odd/even line
-        and #0x20                   ; if odd then start from 4-th palette; offset == 32
-        or  #BCPSF_AUTOINC          ; set auto-increment
+    ; Set return address used by vblank palette load
+    ld hl, #._hicol__vblank_load_pal_done_ret
+    push hl
 
-        ld hl, #_BCPS_REG
-        ld (hl+), a                 ; HL now points to BCPD
+    ; Set address to start of palette load code, ret below will jump to this
+    ld hl, #_p_hicolor_palettes
+    ld a,  (hl+)
+    ld h,  (hl)
+    ld l,  a
+    push   hl
 
-        ld c, #(8 * 4)              ; read and set the the colors that come from previous lines
-2$:
-        pop de
-        ld (hl), e
-        ld (hl), d
-        dec c
-        jr nz, 2$
+    ; Save palette buffer address for incrementing below
+    ld b, h
+    ld c, l
 
-0$:
+    ; Set palette auto-increment and end with
+    ; HL pointing to BCPD, which the palette load expects
+    ld a, #BCPSF_AUTOINC
+    ld hl, #_BCPS_REG
+    ld (hl+), a
+    ret ; Jump to the palette load code
+
+; Execution resumes here after vblank palette load returns
+._hicol__vblank_load_pal_done_ret:
+
+    ; Calculate palette buffer execution start for next line, store to HL
+    ; BC has saved palette buffer address from earlier
+    ld a, c
+    add  a, #BYTES_TO_PAL_AFTER_VBLANK_PAL
+    ld   l, a
+    ld   a, b
+    adc  a, #0
+    ld   h, a
+
+    ._hicol__vbl_wait_mode_3:
         ldh a, (_STAT_REG)
         and #STATF_BUSY
-        jr z, 0$                    ; wait for mode 3
+        jr z, ._hicol__vbl_wait_mode_3  ; wait for mode 3
 
-        ldh a, (_STAT_REG)
-        ld (_STAT_SAVE), a
+    ldh a, (_STAT_REG)
+    ld (_STAT_SAVE), a
 
-        ld a, #STATF_MODE00
-        ldh (_STAT_REG), a
+    ld a, #STATF_MODE00
+    ldh (_STAT_REG), a
+    xor a
+    ldh (_IF_REG), a
+
+    ; Skip first scanline palette buffer address adjustment
+    ; since it was already calculated during vblank
+    jr ._hicol__scanline_load_start_from_vblank
+
+    ._hicol__scanline_load_start:
+        ; Load current palette buffer address
+        ; Calculate palette load execution start for next line, store to HL
+        ld a, (_hicolor_palettes_cur_addr + 0)
+        add a, #BYTES_TO_NEXT_PAL_LINE
+        ld l, a
+        ld a, (_hicolor_palettes_cur_addr + 1)
+        adc a, #0
+        ld h, a
+
+    ._hicol__scanline_load_start_from_vblank:
+
+        ; Set address used for hblank palette load to return to
+        ld de, #._hicol__hblank_load_pal_done_ret
+        push de
+
+        ; Preload the first four bytes
+        ld a, (hl+)
+        ld b, a
+        ld a, (hl+)
+        ld c, a
+        ld a, (hl+)
+        ld d, a
+        ld a, (hl+)
+        ld e, a
+
+        ; Set address ret will jump to for executing the scanline palette load
+        push hl
+
+        ; Save current palette buffer address
+        ld a, l
+        ld (_hicolor_palettes_cur_addr + 0), a
+        ld a, h
+        ld (_hicolor_palettes_cur_addr + 1), a
+
         xor a
         ldh (_IF_REG), a
 
-1$:
-        pop bc                      ; preload the first two colors
-        pop de
+        ld hl, #_BCPD_REG ; Palette load expects HL to point to BCPD
+        ret               ; Jump to the palette load code
 
-        xor a
-        ldh (_IF_REG), a
-        halt                        ; wait for mode 0
-
-        ld (hl), c                  ; set the first two colors
-        ld (hl), b
-        ld (hl), e
-        ld (hl), d
-
-        .rept (4*4)-2               ; read and set four palettes except the two previously set colors
-            pop de
-            ld (hl), e
-            ld (hl), d
-        .endm
+    ; Execution resumes here after hblank palette load returns
+    ._hicol__hblank_load_pal_done_ret:
 
         ld a, (_hicolor_last_scanline)
         ld c, a
         ldh a, (_LY_REG)
         cp c
-        jr c, 1$                    ; load the next 4 palettes
+        jr c, ._hicol__scanline_load_start ; If end of frame not reached then continue loading palettes
 
-        ld a, (_STAT_SAVE)
-        ldh (_STAT_REG), a
-        xor a
-        ldh (_IF_REG), a
+    ld a, (_STAT_SAVE)
+    ldh (_STAT_REG), a
+    xor a
+    ldh (_IF_REG), a
 
-        ld sp, #_SP_SAVE
-        pop hl
-        ld sp, hl                   ; restore SP
+    pop af
+    ldh (__current_bank), a
+    ld (_rROMB0), a
 
-        pop af
-        ldh (__current_bank), a
-        ld (_rROMB0), a
-
-        ret
+    ret
 __endasm;
 }
 
