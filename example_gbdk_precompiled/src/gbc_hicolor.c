@@ -20,6 +20,7 @@ static uint16_t hicolor_palettes_cur_addr;
 // ISR function which updates 4 CGB palettes per scanline
 // alternating between Palettes 0-3 and 4-7
 void hicolor_palette_isr(void) NONBANKED {
+
 __asm
     PALETTES_PER_LINE       = #4 ; How many palettes are transferred per scanline
     PAL_BYTES_PER_LINE      = #PALETTES_PER_LINE * #4 * #2 ; 4 colors/palette × 2 bytes/color
@@ -31,13 +32,14 @@ __asm
     push af
     ld a, (_hicolor_palettes_bank)
     or a
-    jr z, ._hicol__skip_set_bank_if_zero
+    jr z, 0$  ; hicol__skip_set_bank_if_zero
     ldh (__current_bank), a
     ld (_rROMB0), a
-._hicol__skip_set_bank_if_zero:
+
+0$:  ; hicol__skip_set_bank_if_zero
 
     ; Set return address used by vblank palette load
-    ld hl, #._hicol__vblank_load_pal_done_ret
+    ld hl, #1$  ; #_hicol__vblank_load_pal_done_ret
     push hl
 
     ; Set address to start of palette load code, ret below will jump to this
@@ -59,7 +61,7 @@ __asm
     ret ; Jump to the palette load code
 
 ; Execution resumes here after vblank palette load returns
-._hicol__vblank_load_pal_done_ret:
+1$:  ; hicol__vblank_load_pal_done_ret
 
     ; Calculate palette buffer execution start for next line, store to HL
     ; BC has saved palette buffer address from earlier
@@ -70,10 +72,10 @@ __asm
     adc  a, #0
     ld   h, a
 
-    ._hicol__vbl_wait_mode_3:
+    2$:  ; hicol__vbl_wait_mode_3
         ldh a, (_STAT_REG)
         and #STATF_BUSY
-        jr z, ._hicol__vbl_wait_mode_3  ; wait for mode 3
+        jr z, 2$  ; ._hicol__vbl_wait_mode_3  ; wait for mode 3
 
     ldh a, (_STAT_REG)
     ld (_STAT_SAVE), a
@@ -85,9 +87,9 @@ __asm
 
     ; Skip first scanline palette buffer address adjustment
     ; since it was already calculated during vblank
-    jr ._hicol__scanline_load_start_from_vblank
+    jr 3$  ; hicol__scanline_load_start_from_vblank
 
-    ._hicol__scanline_load_start:
+    4$:  ; hicol__scanline_load_start
         ; Load current palette buffer address
         ; Calculate palette load execution start for next line, store to HL
         ld a, (_hicolor_palettes_cur_addr + 0)
@@ -97,10 +99,10 @@ __asm
         adc a, #0
         ld h, a
 
-    ._hicol__scanline_load_start_from_vblank:
+    3$:  ; hicol__scanline_load_start_from_vblank
 
         ; Set address used for hblank palette load to return to
-        ld de, #._hicol__hblank_load_pal_done_ret
+        ld de, #5$  ; hicol__hblank_load_pal_done_ret
         push de
 
         ; Preload the first four bytes
@@ -129,13 +131,13 @@ __asm
         ret               ; Jump to the palette load code
 
     ; Execution resumes here after hblank palette load returns
-    ._hicol__hblank_load_pal_done_ret:
+    5$:  ; hicol__hblank_load_pal_done_ret
 
         ld a, (_hicolor_last_scanline)
         ld c, a
         ldh a, (_LY_REG)
         cp c
-        jr c, ._hicol__scanline_load_start ; If end of frame not reached then continue loading palettes
+        jr c, 4$  ; hicol__scanline_load_start ; If end of frame not reached then continue loading palettes
 
     ld a, (_STAT_SAVE)
     ldh (_STAT_REG), a
