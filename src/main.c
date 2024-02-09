@@ -17,7 +17,7 @@
 #include <hicolour.h>
 
 
-#define VERSION "version 1.4.1"
+#define VERSION "version 1.4.2"
 
 #define HELP_HISTORICAL_CREDITS_STR \
         "Historical credits and info:\n" \

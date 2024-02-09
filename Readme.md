@@ -31,7 +31,7 @@ https://www.flickr.com/photos/rodrixap/10591266994/in/album-72157637154901153/
 
 ```
 png2hicolorgb input_image.png [options]
-version 1.4.1: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
+version 1.4.2: bbbbbr. Based on Glen Cook's Windows GUI "hicolour.exe" 1.2
 Convert an image to Game Boy Hi-Color format
 
 Options
@@ -52,6 +52,7 @@ Options
 --vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)
 --nodedupe : Turn off tile pattern deduplication
 --precompiled : Export Palette data as pre-compiled executable loading code
+--palendbit : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)
 
 Example 1: "png2hicolorgb myimage.png"
 Example 2: "png2hicolorgb myimage.png --csource -o=my_output_filename"
