@@ -521,7 +521,7 @@ static void ExportPalettes(const char * fname_base)
     strcat(filename, ".pal");
     VERBOSE("Writing Palette to: %s\n", filename);
 
-    int outbuf_sz_pals = (((y_region_count_both_sides) * 4 * 4 * 2) + 1);
+    int outbuf_sz_pals = ((y_region_count_both_sides) * 4 * 4 * 2); // No longer +1 for the trailing 0x2D
     uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
 
@@ -546,8 +546,9 @@ static void ExportPalettes(const char * fname_base)
         }
     }
 
-    // TODO: What is this and why? :)
-    *p_buf++ = 0x2d;
+    // This has an unknown purpose and was present in
+    // the original source code, but doesn't appear to be needed.
+    // *p_buf++ = 0x2d;
 
     if (!file_write_from_buffer(filename, output_buf, outbuf_sz_pals))
         set_exit_error();
@@ -569,8 +570,8 @@ static void ExportPalettesPrecompiled(const char * fname_base)
     size_t pal_data_size = y_region_count_both_sides * 4 * 4 * 2;
     // In pre-compiled mode each byte will be doubled (`ld [hl], <byte>`), plus one `ret` per "region".
     pal_data_size = pal_data_size * 2 + y_region_count_both_sides * 4;
-    // TODO: add for stray mystery byte, test deleting this
-    size_t outbuf_sz_pals = pal_data_size + 1;
+
+    size_t outbuf_sz_pals = pal_data_size; // No longer +1 for the trailing 0x2D
 
     uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
@@ -615,8 +616,9 @@ static void ExportPalettesPrecompiled(const char * fname_base)
             *p_buf++ = SM83_OPCODE_RET;
     }
 
-    // TODO: What is this and why? :)
-    *p_buf++ = 0x2d;
+    // This has an unknown purpose and was present in
+    // the original source code, but doesn't appear to be needed.
+    // *p_buf++ = 0x2d;
 
     if (!file_write_from_buffer(filename, output_buf, outbuf_sz_pals))
         set_exit_error();
