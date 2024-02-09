@@ -147,6 +147,7 @@ static void display_help(void) {
         "--vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)\n"
         "--nodedupe : Turn off tile pattern deduplication\n"
         "--precompiled : Export Palette data as pre-compiled executable loading code\n"
+        "--palendbit : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png --csource -o=my_output_filename\"\n"
@@ -269,6 +270,9 @@ static int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "--precompiled") == argv[i]) {
             opt_set_precompiled_palette(true);
+
+        } else if (strstr(argv[i], "--palendbit") == argv[i]) {
+            opt_set_palendbit(true);
 
         } else if (argv[i][0] == '-') {
             ERR("Unknown argument: %s\n\n", argv[i]);

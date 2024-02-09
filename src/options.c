@@ -14,6 +14,7 @@ bool opt_tile_dedupe                   = true;
 bool opt_c_file_output                 = false;
 bool opt_c_precompiled                 = false;
 int  opt_bank_num                      = BANK_NUM_UNSET;
+bool opt_palendbit                    = false;
 
 void opt_set_map_tile_order(bool newval) { opt_map_use_sequential_tile_index = newval; }
 bool opt_get_map_tile_order(void)        { return opt_map_use_sequential_tile_index; }
@@ -29,3 +30,6 @@ int opt_get_bank_num(void)        { return opt_bank_num; }
 
 void opt_set_precompiled_palette(bool newval) { opt_c_precompiled = newval; }
 bool opt_get_precompiled_palette(void)        { return opt_c_precompiled; }
+
+void opt_set_palendbit(bool newval) { opt_palendbit = newval; }
+bool opt_get_palendbit(void)        { return opt_palendbit; }

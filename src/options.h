@@ -27,6 +27,9 @@ bool opt_get_c_file_output(void);
 void opt_set_precompiled_palette(bool newval);
 bool opt_get_precompiled_palette(void);
 
+void opt_set_palendbit(bool newval);
+bool opt_get_palendbit(void);
+
 void opt_set_bank_num(int newval);
 int opt_get_bank_num(void);
 

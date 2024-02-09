@@ -546,6 +546,11 @@ static void ExportPalettes(const char * fname_base)
         }
     }
 
+    // Set unused bit .15 = 1 for last u16 palette entry
+    // to indicate it's the final one
+    if (opt_get_palendbit())
+        output_buf[outbuf_sz_pals - 1] |= 0x80u;
+
     // This has an unknown purpose and was present in
     // the original source code, but doesn't appear to be needed.
     // *p_buf++ = 0x2d;
