@@ -30,8 +30,8 @@ bool opt_get_c_file_output(void);
 void opt_set_precompiled_palette(bool newval);
 bool opt_get_precompiled_palette(void);
 
-void opt_set_palendbit(bool newval);
-bool opt_get_palendbit(void);
+void opt_set_pal_end_bit(bool newval);
+bool opt_get_pal_end_bit(void);
 
 void opt_set_enable_pal_end_color(uint16_t end_color_bgr555);
 bool opt_get_enable_pal_end_color(void);

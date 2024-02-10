@@ -274,7 +274,7 @@ static int handle_args(int argc, char * argv[]) {
             opt_set_precompiled_palette(true);
 
         } else if (strstr(argv[i], "--palendbit") == argv[i]) {
-            opt_set_palendbit(true);
+            opt_set_pal_end_bit(true);
 
         } else if (strstr(argv[i], "--addendcolor=") == argv[i]) {
             // Color should be in BGR555 hex format, so white: 0x7FFFF, max red 0x7C00, max green 0x3E00, etc
@@ -290,7 +290,7 @@ static int handle_args(int argc, char * argv[]) {
 
 
     // Check and warn about option compatibility
-    if (opt_get_palendbit() && opt_get_precompiled_palette()) {
+    if (opt_get_pal_end_bit() && opt_get_precompiled_palette()) {
         LOG("Warning: --palendbit ignored when --precompiled is enabled\n");
     }
 
