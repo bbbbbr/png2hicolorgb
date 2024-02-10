@@ -580,36 +580,58 @@ static void ExportPalettes(const char * fname_base)
 }
 
 
+#define LDHL_2x_SZ            2 // Scale factor for pal color bytes loaded via `ld [hl], <byte>`
+#define RET_SZ                1 // Size of ret opcode
+#define VBLANK_LOAD_LINE_CNT  2 // Number of lines loaded in vblank
+#define HALT_LOAD_SZ          5 // Size of Halt + LD HL, B/C/D/E on non-vblank scanlines 
+#define STAT_PRELOAD_SAVE_SZ  4 // Number of pal color bytes that get pre-loaded in STAT isr, so don't need 2x sizing for ld [hl], <byte>
+#define PAL_BYTES_PER_LINE    (PALS_PER_SIDE * COLORS_PER_PAL * BYTES_PER_COLOR)
+
 static void ExportPalettesPrecompiled(const char * fname_base)
 {
     char filename[MAX_PATH * 2];
-    unsigned int      i, j, k;
+    unsigned int  line, pal, col;
     s32      r,g,b,v;
+    size_t outbuf_sz_pals = 0;
 
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
     VERBOSE("Writing Pre-compiled Palette to: %s\n", filename);
 
-    // Each "region" contains 4 palettes × 4 colors/palette × 2 bytes/color.
-    size_t pal_data_size = y_region_count_both_sides * 4 * 4 * 2;
-    // In pre-compiled mode each byte will be doubled (`ld [hl], <byte>`), plus one `ret` per "region".
-    pal_data_size = pal_data_size * 2 + y_region_count_both_sides * 4;
+    // How to calculate output size:
+    //
+    // VBLANK ISR (2 Lines)
+    // ~ No wait + load header code
+    // + Always uses LD [HL] (so 2x num pal bytes)
+    // + 1 ret shared by the 2 lines
+    // = (Pal bytes per line x 2) x (2 lines) + 1 ret 
+    //   (((4 x 4 x 2)       x 2)  x 2)       + 1 = 129
+    outbuf_sz_pals = ((PAL_BYTES_PER_LINE * LDHL_2x_SZ) * VBLANK_LOAD_LINE_CNT) + RET_SZ;
 
-    size_t outbuf_sz_pals = pal_data_size; // No longer +1 for the trailing 0x2D
+    // Then...
+    // STAT ISR (Num Lines - 2) 
+    // - 4 bytes preload in STAT ISR without LD [HL] (so: 4 pal bytes without 2x sizing)
+    // + Then wait + load header code (so +5 bytes)
+    // + Then remainder of pal bytes get LD [HL] (so 2x num pal bytes)
+    // + 1 ret per line
+    // = (( (Pal bytes per line x 2) - 4 preload bytes + 5 header + 1 ret)  x (num lines - 2 vblank lines)
+    //   ( ( (4 x 4 x 2)        x 2) - 4)              + 5        + 1) = 66 x (num lines - 2)
+    outbuf_sz_pals += ((PAL_BYTES_PER_LINE * LDHL_2x_SZ) - STAT_PRELOAD_SAVE_SZ + HALT_LOAD_SZ + RET_SZ) * (y_region_count_both_sides - VBLANK_LOAD_LINE_CNT);
 
     uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
 
-
-    for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
+    // Note: "line" 0 is equivalent to something like scanline -1
+    // (due to left side region starting 1 scanline before line 0)
+    for (line = 0; line < (y_region_count_both_sides); line++) // Number of palette sets (left side updates + right side updates)
     {
-        for (j = 0; j < 4; j++) // Each palette in the set
+        for (pal = 0; pal < 4; pal++) // Each palette in the line
         {
-            for(k=0; k<4;k++) // Each color in the palette
+            for(col = 0; col < 4;col++) // Each color in the palette
             {
-                // Precompiled mode has a "header" after the first two colours, except for the first
-                // two scanlines (written during VBlank).
-                if (i >= 2 && j == 0 && k == 2) {
+                // Precompiled mode has a "header" inserted after the first two colours of palette 0,
+                // except for the first two scanline lines (which are during VBlank so can load directly without a preload + wait)
+                if (line >= 2 && pal == 0 && col == 2) {
                     *p_buf++ = SM83_OPCODE_HALT;
                     *p_buf++ = SM83_OPCODE_LD_HL_B;
                     *p_buf++ = SM83_OPCODE_LD_HL_C;
@@ -617,26 +639,33 @@ static void ExportPalettesPrecompiled(const char * fname_base)
                     *p_buf++ = SM83_OPCODE_LD_HL_E;
                 }
 
-                r = IdealPal[(i%2)*4+j][i/2][k][0];
-                g = IdealPal[(i%2)*4+j][i/2][k][1];
-                b = IdealPal[(i%2)*4+j][i/2][k][2];
+                r = IdealPal[(line % 2)*4 + pal][line / 2][col][0];
+                g = IdealPal[(line % 2)*4 + pal][line / 2][col][1];
+                b = IdealPal[(line % 2)*4 + pal][line / 2][col][2];
 
-                // TODO: Converting to BGR555 probably
+                // Converting to BGR555
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
 
-                // 2 bytes per color
-                if (i < 2 || j > 0 || k >= 2) {
+                // Load 2 bytes per color
+
+                // Insert LD [HL] opcode before pal data bytes... when:
+                // -  Any time during first two lines (i.e for all pal bytes in vblank)
+                // -  Or is the Second Palette or more (of each Line)
+                // -  Or is the Third Color or more (of each Palette. the STAT isr has pre-load code for the first two pal colors)
+                if (line < 2 || pal >= 1 || col >= 2) {
                     *p_buf++ = SM83_OPCODE_LD_HL_IMM8; // ld [hl], <imm8>
                 }
                 *p_buf++ = (u8)(v & 255);
-                if (i < 2 || j > 0 || k >= 2) {
+
+                if (line < 2 || pal >= 1 || col >= 2) {
                     *p_buf++ = SM83_OPCODE_LD_HL_IMM8; // ld [hl], <imm8>
                 }
                 *p_buf++ = (u8)(v / 256);
             }
         }
 
-        if (i >= 1)
+        // Skip return for the first palette line (during vblank)
+        if (line >= 1)
             *p_buf++ = SM83_OPCODE_RET;
     }
 
@@ -646,7 +675,6 @@ static void ExportPalettesPrecompiled(const char * fname_base)
 
     if (!file_write_from_buffer(filename, output_buf, outbuf_sz_pals))
         set_exit_error();
-
 }
 
 

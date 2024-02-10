@@ -128,7 +128,7 @@ hicolor_vbl::
 	ld [wPaletteCurPtr + 1], a
 
 	ld hl, rBCPD
-	ret ; Jump to the palette code.
+	ret ; Jump to the pre-compiled palette loading code
 .ret
 	xor a ; TODO
 	ldh [rLYC], a
@@ -173,7 +173,7 @@ hicolor_stat::
 	ld a, [hli]
 	ld e, a
 
-	push hl ; Where the `ret` will jump to.
+	push hl ; Where the `ret` will jump to (the pre-compiled palette loading code)
 	ld hl, rBCPD
 	ret
 .ret
