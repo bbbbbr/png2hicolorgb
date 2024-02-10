@@ -51,11 +51,13 @@ Options
 --best     : Use highest quality conversion settings (--type=3 -L=adaptive-best -R=adaptive-best)
 --vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)
 --nodedupe : Turn off tile pattern deduplication
---precompiled : Export Palette data as pre-compiled executable loading code
---palendbit : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)
+--precompiled   : Export Palette data as pre-compiled executable loading code
+--palendbit     : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)
+--addendcolor=N : Append 32 x color N (hex BGR555) in pal data to clear BG for shorter images (64 bytes) (not in precompiled)
 
 Example 1: "png2hicolorgb myimage.png"
 Example 2: "png2hicolorgb myimage.png --csource -o=my_output_filename"
+Example 2: "png2hicolorgb myimage.png --palendbit --addendcolor=0x7FFF -o=my_output_filename"
 * Default settings provide good results. Better quality but slower: "--type=3 -L=adaptive-best -R=adaptive-best"
 
 Historical credits and info:

@@ -90,4 +90,9 @@ enum pattern_types {
 #define VALIDATE_WIDTH  160 // (BUF_WIDTH)
 #define VALIDATE_HEIGHT (BUF_HEIGHT)
 
+#define BYTES_PER_COLOR 2
+#define COLORS_PER_PAL  4
+#define PALS_PER_SIDE  4
+
+
 #endif

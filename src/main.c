@@ -146,11 +146,13 @@ static void display_help(void) {
         "--best     : Use highest quality conversion settings (--type=3 -L=adaptive-best -R=adaptive-best)\n"
         "--vaddrid  : Map uses vram id (128->255->0->127) instead of (*Default*) sequential tile order (0->255)\n"
         "--nodedupe : Turn off tile pattern deduplication\n"
-        "--precompiled : Export Palette data as pre-compiled executable loading code\n"
-        "--palendbit : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)\n"
+        "--precompiled   : Export Palette data as pre-compiled executable loading code\n"
+        "--palendbit     : Set unused bit .15 = 1 for last u16 entry in palette data indicating end (not in precompiled)\n"
+        "--addendcolor=N : Append 32 x color N (hex BGR555) in pal data to clear BG for shorter images (64 bytes) (not in precompiled)\n"
         "\n"
         "Example 1: \"png2hicolorgb myimage.png\"\n"
         "Example 2: \"png2hicolorgb myimage.png --csource -o=my_output_filename\"\n"
+        "Example 2: \"png2hicolorgb myimage.png --palendbit --addendcolor=0x7FFF -o=my_output_filename\"\n"
         "* Default settings provide good results. Better quality but slower: \"--type=3 -L=adaptive-best -R=adaptive-best\"\n"
         "\n"
    );
@@ -274,12 +276,26 @@ static int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "--palendbit") == argv[i]) {
             opt_set_palendbit(true);
 
+        } else if (strstr(argv[i], "--addendcolor=") == argv[i]) {
+            // Color should be in BGR555 hex format, so white: 0x7FFFF, max red 0x7C00, max green 0x3E00, etc
+            opt_set_enable_pal_end_color( strtol(argv[i] + strlen("--addendcolor="), NULL, 16) );
+
         } else if (argv[i][0] == '-') {
             ERR("Unknown argument: %s\n\n", argv[i]);
             display_help();
             return false;
         }
 
+    }
+
+
+    // Check and warn about option compatibility
+    if (opt_get_palendbit() && opt_get_precompiled_palette()) {
+        LOG("Warning: --palendbit ignored when --precompiled is enabled\n");
+    }
+
+    if (opt_get_enable_pal_end_color() && opt_get_precompiled_palette()) {
+        LOG("Warning: --addendcolor ignored when --precompiled is enabled\n");
     }
 
     return true;

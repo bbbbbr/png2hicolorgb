@@ -517,11 +517,22 @@ static void ExportPalettes(const char * fname_base)
     unsigned int      i, j, k;
     s32      r,g,b,v;
 
+    uint16_t pal_end_color_bgr555 = 0x0000u;
+    int pal_end_color_count = 0;
+
     strcpy(filename, fname_base);
     strcat(filename, ".pal");
     VERBOSE("Writing Palette to: %s\n", filename);
 
-    int outbuf_sz_pals = ((y_region_count_both_sides) * 4 * 4 * 2); // No longer +1 for the trailing 0x2D
+    // No longer +1 for the trailing 0x2D
+    int outbuf_sz_pals = (y_region_count_both_sides * PALS_PER_SIDE * COLORS_PER_PAL * BYTES_PER_COLOR);
+
+    // Handle resize if trailing end colors have been appended
+    if (opt_get_enable_pal_end_color()) {
+        opt_load_pal_end_color(&pal_end_color_bgr555, &pal_end_color_count);
+        outbuf_sz_pals += (pal_end_color_count * BYTES_PER_COLOR);
+    }
+
     uint8_t output_buf[outbuf_sz_pals];
     uint8_t * p_buf = output_buf;
 
@@ -536,13 +547,21 @@ static void ExportPalettes(const char * fname_base)
                 g = IdealPal[(i%2)*4+j][i/2][k][1];
                 b = IdealPal[(i%2)*4+j][i/2][k][2];
 
-                // TODO: Converting to BGR555 probably
+                // Converting to BGR555
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
 
                 // 2 bytes per color
                 *p_buf++ = (u8)(v & 255);
                 *p_buf++ = (u8)(v / 256);
             }
+        }
+    }
+
+    // Add trailing 32 colors to clear BG if enabled
+    if (opt_get_enable_pal_end_color()) {
+        for (int c = 0; c < pal_end_color_count; c++) {
+            *p_buf++ = (u8)(pal_end_color_bgr555 & 255);
+            *p_buf++ = (u8)(pal_end_color_bgr555 / 256);
         }
     }
 

@@ -14,7 +14,9 @@ bool opt_tile_dedupe                   = true;
 bool opt_c_file_output                 = false;
 bool opt_c_precompiled                 = false;
 int  opt_bank_num                      = BANK_NUM_UNSET;
-bool opt_palendbit                    = false;
+bool opt_palendbit                     = false;
+bool opt_enable_pal_end_col            = false;
+uint16_t pal_end_color                 = 0x0000u; // Black in BGR555
 
 void opt_set_map_tile_order(bool newval) { opt_map_use_sequential_tile_index = newval; }
 bool opt_get_map_tile_order(void)        { return opt_map_use_sequential_tile_index; }
@@ -33,3 +35,26 @@ bool opt_get_precompiled_palette(void)        { return opt_c_precompiled; }
 
 void opt_set_palendbit(bool newval) { opt_palendbit = newval; }
 bool opt_get_palendbit(void)        { return opt_palendbit; }
+
+void opt_set_enable_pal_end_color(uint16_t end_color_bgr555) {
+
+    opt_enable_pal_end_col = true;
+    // Make sure unused high bit is not set for compat with palendbit
+    pal_end_color = (end_color_bgr555 & BGR555_MASK);
+}
+
+bool opt_get_enable_pal_end_color(void) {
+
+    return opt_enable_pal_end_col;
+}
+
+void opt_load_pal_end_color(uint16_t * p_end_color, int * pal_end_color_count) {
+
+    *p_end_color = pal_end_color;
+
+    if (opt_enable_pal_end_col) {
+        *pal_end_color_count = APPEND_END_COLOR_COUNT; // Add 8 Palettes x 4 Colors to palette data (2 bytes each)
+    } else {
+        *pal_end_color_count = 0; // Not enabled, so add zero bytes to pal size
+    }
+}
