@@ -87,21 +87,21 @@ macoszip: macos cleanexamples
 	strip $(BIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-macos.zip Readme.md LICENSE info/hicolor_pic.gb
-	zip -r $(BIN)-macos.zip example_gbdk example_rgbds $(BIN)
+	zip -r $(BIN)-macos.zip example_gbdk example_rgbds example_gbdk_precompiled example_rgbds_precompiled $(BIN)
 	mv $(BIN)-macos.zip $(PACKDIR)
 
 linuxzip: linux cleanexamples
 	strip $(BIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-linux.zip Readme.md LICENSE info/hicolor_pic.gb
-	zip -r $(BIN)-linux.zip example_gbdk example_rgbds $(BIN)
+	zip -r $(BIN)-linux.zip example_gbdk example_rgbds example_gbdk_precompiled example_rgbds_precompiled $(BIN)
 	mv $(BIN)-linux.zip $(PACKDIR)
 
 wincrosszip: wincross cleanexamples
 	strip $(BIN_WIN)
 	# -j discards (junks) path to file
 	zip -j $(BIN)-windows.zip Readme.md LICENSE info/hicolor_pic.gb
-	zip -r $(BIN)-windows.zip example_gbdk example_rgbds $(BIN_WIN)
+	zip -r $(BIN)-windows.zip example_gbdk example_rgbds example_gbdk_precompiled example_rgbds_precompiled $(BIN_WIN)
 	mv $(BIN)-windows.zip $(PACKDIR)
 
 package:
