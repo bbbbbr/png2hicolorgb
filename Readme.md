@@ -1,5 +1,5 @@
 # Note about GBDK-2020
-This utility is now part of [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020) (version 4.2.0+), so you may already have a copy if you'r using that dev kit.
+This utility is now part of [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020) (version 4.2.0+), so you may already have a copy if you're using that dev kit.
 
 # png2hicolorgb
 An updated version of Glen Cook's Windows GUI "hicolour.exe" 1.2 conversion tool for the Game Boy Color. The starting code base was the 1.2 release.
