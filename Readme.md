@@ -1,4 +1,4 @@
-# Note about GBDK-2020
+### Note about GBDK-2020
 This utility is now part of [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020) (version 4.2.0+), so you may already have a copy if you're using that dev kit.
 
 # png2hicolorgb
