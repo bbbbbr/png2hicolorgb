@@ -5,7 +5,7 @@ PNG images placed in the res/hicolor folder will get automatically converted and
 
 To use them, include the automatically generated header file (based on the png filename) and then use the `hicolor_start()` and `hicolor_stop()` functions.
 
-# Pallete ISR
+# Palette ISR
 The new palette update ISR is contributed by Toxa
 https://github.com/untoxa
 
